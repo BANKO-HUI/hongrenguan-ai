@@ -94,6 +94,21 @@ test('executor distinguishes a later AI outage from a signed-out account', async
   assert.deepEqual(status.account, { email: 'designer@example.com', planType: 'plus' });
 });
 
+test('manual account recheck resets the persistent generation session', async (t) => {
+  const { workbench: w } = fixture(t);
+  let resets = 0;
+  const e = new Executor(w, {
+    inspect,
+    resetAccountSession: () => {
+      resets++;
+    },
+  });
+  t.after(() => e.stop());
+  await e.recheck();
+  assert.equal(resets, 1);
+  assert.equal(e.snapshot().ready, true);
+});
+
 test('usage-limit failures block later image tasks while analysis remains available', async (t) => {
   const { workbench: w } = fixture(t);
   const first = await prepared(w, 1);
@@ -107,7 +122,7 @@ test('usage-limit failures block later image tasks while analysis remains availa
     async ({ schema }) => {
       if (schema.properties.analysis) return { analysis: sampleAnalysis };
       imageCalls++;
-      throw new Error('图像生成服务已达到使用额度上限（429 usage_limit_reached）');
+      throw new Error('Your workspace is out of credits. Add credits to continue.');
     },
     { taskConcurrency: 1 },
   );
@@ -121,10 +136,13 @@ test('usage-limit failures block later image tasks while analysis remains availa
   assert.equal(blocked.imageGeneration, false);
   assert.equal(blocked.imageIssue.code, 'usage-limit');
   assert.equal(blocked.imageIssue.providerMode, 'account');
-  assert.match(blocked.message, /帐号生图额度已达到上限/);
+  assert.match(blocked.message, /当前登录工作区返回生图额度不足/);
   assert.equal(w.store.state.tasks.find((task) => task.id === secondTask.id).status, 'pending');
   assert.equal(imageCalls, 1);
-  assert.throws(() => e.control('start-task', null, secondTask.id), /帐号生图额度已达到上限/);
+  assert.throws(
+    () => e.control('start-task', null, secondTask.id),
+    /当前登录工作区返回生图额度不足/,
+  );
 
   const uploaded = await w.uploadTrend(await png('orange'), 'quota-analysis.png');
   await until(
@@ -1069,7 +1087,7 @@ test('series generation creates a trend-matched model and scene when optional re
   assert.equal(w.store.state.projects[0].looks[0].title, 'Trend-matched look');
 });
 
-test('single-look generation downsizes references and retries transient image service errors', async (t) => {
+test('single-look generation downsizes references and retries transient image rate limits', async (t) => {
   const { workbench: w } = fixture(t);
   const p = await prepared(w, 1);
   const largeModel = await sharp({
@@ -1088,7 +1106,7 @@ test('single-look generation downsizes references and retries transient image se
     async ({ images }) => {
       calls++;
       referenceDimensions = await sharp(images[0]).metadata();
-      if (calls === 1) throw new Error('image_gen.imagegen returned 500 Internal Server Error');
+      if (calls === 1) throw new Error('image generation returned 429 rate_limit_exceeded');
       return {
         result: {
           plan: {

@@ -58,21 +58,22 @@ const singleSeriesSchema = envelope('result', {
     image: imageResultSchema(),
   },
 });
+const imageUsageLimitError = (error) =>
+  /(?:usage_limit_reached|credit_balance_exhausted|(?:organization|project)_spend_limit_exceeded|organization_usage_limit_exceeded|insufficient_quota|workspace\s+is\s+out\s+of\s+credits|out\s+of\s+credits|add\s+credits\s+to\s+continue|用量上限|使用额度上限|生图额度已用尽|额度不足)/i.test(
+    String(error?.message || error),
+  );
 const retryableImageError = (error) =>
-  /(?:\b50[0234]\b|internal server error|UND_ERR_(?:SOCKET|CONNECT_TIMEOUT|HEADERS_TIMEOUT|BODY_TIMEOUT)|ECONNRESET|ECONNREFUSED|EPIPE|ETIMEDOUT|fetch failed|socket (?:closed|hang up)|connection (?:reset|closed|failed)|network error|timed? out|timeout|temporarily unavailable|连接失败|连接超时)/i.test(
+  !imageUsageLimitError(error) &&
+  /(?:\b429\b|rate.?limit|slow_down|请求过多|限速|\b50[0234]\b|internal server error|UND_ERR_(?:SOCKET|CONNECT_TIMEOUT|HEADERS_TIMEOUT|BODY_TIMEOUT)|ECONNRESET|ECONNREFUSED|EPIPE|ETIMEDOUT|fetch failed|socket (?:closed|hang up)|connection (?:reset|closed|failed)|network error|timed? out|timeout|temporarily unavailable|连接失败|连接超时)/i.test(
     String(error?.message || error),
   );
 const smartConcurrencyError = (error) =>
   /(?:\b429\b|rate.?limit|slow_down|\b50[0234]\b|internal server error|UND_ERR_(?:SOCKET|CONNECT_TIMEOUT|HEADERS_TIMEOUT|BODY_TIMEOUT)|ECONNRESET|ECONNREFUSED|EPIPE|ETIMEDOUT|fetch failed|socket (?:closed|hang up)|connection (?:reset|closed|failed)|network error|timed? out|timeout|temporarily unavailable|连接失败|连接超时|限速)/i.test(
     String(error?.message || error),
   );
-const imageUsageLimitError = (error) =>
-  /(?:usage_limit_reached|credit_balance_exhausted|(?:organization|project)_spend_limit_exceeded|organization_usage_limit_exceeded|insufficient_quota|用量上限|使用额度上限|生图额度已用尽|额度不足)/i.test(
-    String(error?.message || error),
-  );
 const imageUsageLimitMessage = (providerMode) =>
   providerMode === 'account'
-    ? '帐号生图额度已达到上限；请在设置中切换到可用 API，或等待额度恢复后重新检测连接。'
+    ? '当前登录工作区返回生图额度不足。若帐号仍有额度，请在设置中重新检测或重新登录以刷新工作区；也可手动切换到已配置的可用 API。'
     : '当前 API 的生图额度或支出上限已用尽；请更换可用 API，补充额度后重新检测连接。';
 const analysisModelUnavailableError = (error) =>
   /(?:analysis-model-unavailable|no available channels? for model|model[_\s-]*not[_\s-]*found|model[^\n]{0,120}(?:not available|unavailable|not supported)|unsupported model|does not support[^\n]{0,80}(?:chat|completion)|无可用渠道|没有可用渠道|模型[^\n]{0,80}(?:不可用|不支持|不存在))/i.test(
@@ -192,6 +193,7 @@ export class Executor {
       retryDelay = 1500,
       stalledAfter = 15 * 60 * 1000,
       cleanupJobDirectory = removeTemporaryDirectory,
+      resetAccountSession = disposeCodexAppServer,
     } = options;
     const thirdParty =
       suppliedThirdParty || new OpenAICompatibleProvider({ fetchImpl: thirdPartyFetch });
@@ -238,6 +240,7 @@ export class Executor {
     this.retryDelay = retryDelay;
     this.stalledAfter = stalledAfter;
     this.cleanupJobDirectory = cleanupJobDirectory;
+    this.resetAccountSession = resetAccountSession;
     this.selectedModel = savedProvider?.textModel || this.accountModel;
     this.jobs = new Map();
     this.manualQueue = new Set();
@@ -400,6 +403,10 @@ export class Executor {
       this.checking = null;
     }
   }
+  async recheck() {
+    if (this.providerMode === 'account') this.resetAccountSession();
+    return this.check();
+  }
   start() {
     this.stopped = false;
     this.timer = setInterval(() => this.tick(), this.interval);
@@ -460,6 +467,7 @@ export class Executor {
       this.usingSavedProvider = Boolean(saved);
       this.selectedModel = configured.textModel;
     } else {
+      this.resetAccountSession();
       this.providerMode = 'account';
       this.usingSavedProvider = false;
       this.selectedModel = this.accountModel;

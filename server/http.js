@@ -115,7 +115,7 @@ export function createApp(
   );
   app.post('/api/executor/check', async (_req, res) => {
     ensure(executor, '自动执行器未启动，请重启工作台服务。', 503);
-    res.json(await executor.check());
+    res.json(await (executor.recheck ? executor.recheck() : executor.check()));
   });
   app.put('/api/provider', async (req, res) => {
     ensure(executor?.configureProvider, '当前执行器不支持切换 API。', 503);
@@ -137,8 +137,8 @@ export function createApp(
     ensure(executor, '自动执行器未启动，请重启工作台服务。', 503);
     const { authUrl, loginId, completion } = await login();
     completion.then(
-      () => executor.check(),
-      () => executor.check(),
+      () => (executor.recheck ? executor.recheck() : executor.check()),
+      () => (executor.recheck ? executor.recheck() : executor.check()),
     );
     res.json({ authUrl, loginId });
   });

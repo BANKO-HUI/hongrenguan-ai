@@ -71,6 +71,8 @@ test('navigation, project switching and reload preserve unfinished choices', asy
     buffer: await png('green'),
   });
   await expect(page.getByText('参考图片 1', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: '涂鸦', exact: true })).toHaveClass(/active/);
+  await expect(page.getByRole('button', { name: '涂鸦极细笔', exact: true })).toHaveClass(/active/);
   await page.getByText('更多调整', { exact: true }).click();
   await page.getByRole('button', { name: '商品白底', exact: true }).click();
   await page.getByLabel('色彩浓度').fill('67');
@@ -80,7 +82,9 @@ test('navigation, project switching and reload preserve unfinished choices', asy
   await expect(page.getByLabel('改款调整说明')).toHaveValue('保留这条尚未提交的改款说明。');
   await expect(page.getByText('参考图片 1', { exact: true })).toBeVisible();
 
+  await page.getByRole('button', { name: /成片管理/ }).click();
   await page.locator('.project').filter({ hasText: 'draft-two' }).click();
+  await expect(page.getByRole('heading', { name: '改款中心', exact: true })).toBeVisible();
   await page.locator('.project').filter({ hasText: 'draft-one' }).click();
   await expect(page.getByLabel('改款调整说明')).toHaveValue('保留这条尚未提交的改款说明。');
   await expect(page.getByText('参考图片 1', { exact: true })).toBeVisible();

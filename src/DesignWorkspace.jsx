@@ -135,10 +135,10 @@ function GenerationPulse({ task, busy }) {
 }
 
 function AnnotationStage({ src, annotations, setAnnotations }) {
-  const [tool, setTool] = useState('circle');
+  const [tool, setTool] = useState('brush');
   const [mode, setMode] = useState('adjust');
   const [color, setColor] = useState(annotationColors[0].color);
-  const [brushSize, setBrushSize] = useState(10);
+  const [brushSize, setBrushSize] = useState(2);
   const [showAnnotations, setShowAnnotations] = useState(true);
   const [zoom, setZoom] = useState(1);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
@@ -393,6 +393,7 @@ function AnnotationStage({ src, annotations, setAnnotations }) {
         {tool === 'brush' && (
           <div className="annotation-brush-presets" role="group" aria-label="涂鸦笔粗细">
             {[
+              ['极细', 2],
               ['细', 6],
               ['中', 10],
               ['粗', 18],

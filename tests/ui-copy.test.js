@@ -45,3 +45,13 @@ test('restyle tasks always use complete-image results without layer controls', (
   assert.match(design, /layerMode: false/);
   assert.match(design, /标注区域作为精准调整指引/);
 });
+
+test('image projects open restyle directly and freehand uses the finest default brush', () => {
+  const app = read('../src/App.jsx');
+  const design = read('../src/DesignWorkspace.jsx');
+  assert.match(app, /const selectProject = \(id\) => \{[\s\S]*setStep\('restyle'\)/);
+  assert.match(app, /if \(created\[0\]\)[\s\S]*setStep\('restyle'\)/);
+  assert.match(design, /const \[tool, setTool\] = useState\('brush'\)/);
+  assert.match(design, /const \[brushSize, setBrushSize\] = useState\(2\)/);
+  assert.match(design, /\['极细', 2\]/);
+});

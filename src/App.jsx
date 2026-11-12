@@ -173,6 +173,7 @@ export default function App() {
   const selectProject = (id) => {
     setProjectId(id);
     setRestyleEntry(null);
+    setStep('restyle');
     if (window.innerWidth <= 820) setSidebar(false);
   };
 
