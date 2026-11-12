@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import {
   Check,
   ImagePlus,
@@ -46,7 +46,6 @@ const projectCover = (project) =>
 export default function App() {
   const [theme, setTheme] = useState(() => {
     const initial = readInitialTheme();
-    document.documentElement.dataset.theme = initial;
     return initial;
   });
   const [data, setData] = useState(null);
@@ -64,7 +63,9 @@ export default function App() {
   const taskStatuses = useRef(null);
   const pollDelay = useRef(1200);
 
-  useEffect(() => applyTheme(theme), [theme]);
+  useLayoutEffect(() => {
+    applyTheme(theme);
+  }, [theme]);
 
   useEffect(() => {
     if (!data) return;
@@ -217,7 +218,11 @@ export default function App() {
     setStep('white');
   };
 
-  const toggleTheme = () => setTheme((current) => (current === 'light' ? 'dark' : 'light'));
+  const toggleTheme = () => {
+    const next = theme === 'light' ? 'dark' : 'light';
+    applyTheme(next);
+    setTheme(next);
+  };
 
   if (!data)
     return (

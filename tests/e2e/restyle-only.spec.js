@@ -1,5 +1,52 @@
 import { test, expect } from '@playwright/test';
+import sharp from 'sharp';
 import { png } from '../helpers.js';
+
+test('rapid light and dark switching never blanks the workbench', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', (error) => pageErrors.push(error.message));
+  await page.addInitScript(() => localStorage.setItem('badmark-theme-v1', 'dark'));
+  await page.goto('/');
+  await expect(page.locator('.app-shell')).toBeVisible();
+
+  for (let index = 0; index < 8; index += 1) {
+    const current = index % 2 === 0 ? 'dark' : 'light';
+    const next = current === 'dark' ? 'light' : 'dark';
+    await page
+      .getByRole('button', { name: `切换为${next === 'light' ? '浅色' : '深色'}模式` })
+      .click();
+    await expect(page.locator('html')).toHaveAttribute('data-theme', next);
+    await expect(page.locator('.app-shell')).toBeVisible();
+
+    const surfaces = await page.evaluate(() => {
+      const root = document.documentElement;
+      const shell = document.querySelector('.app-shell');
+      const center = document.elementFromPoint(innerWidth / 2, innerHeight / 2);
+      return {
+        root: getComputedStyle(root).backgroundColor,
+        body: getComputedStyle(document.body).backgroundColor,
+        shellDisplay: getComputedStyle(shell).display,
+        shellVisibility: getComputedStyle(shell).visibility,
+        shellOpacity: Number(getComputedStyle(shell).opacity),
+        centerTag: center?.tagName,
+      };
+    });
+    const expectedBackground = next === 'light' ? 'rgb(238, 240, 243)' : 'rgb(12, 12, 12)';
+    expect(surfaces.root).toBe(expectedBackground);
+    expect(surfaces.body).toBe(expectedBackground);
+    expect(surfaces.shellDisplay).not.toBe('none');
+    expect(surfaces.shellVisibility).toBe('visible');
+    expect(surfaces.shellOpacity).toBe(1);
+    expect(['HTML', 'BODY']).not.toContain(surfaces.centerTag);
+
+    const screenshot = await page.screenshot();
+    const stats = await sharp(screenshot).stats();
+    expect(Math.max(...stats.channels.slice(0, 3).map((channel) => channel.stdev))).toBeGreaterThan(
+      8,
+    );
+  }
+  expect(pageErrors).toEqual([]);
+});
 
 test('one image per project preserves history while multiple restyle tasks run together', async ({
   page,
@@ -40,11 +87,11 @@ test('one image per project preserves history while multiple restyle tasks run t
 
   const projectTwo = page.locator('.project').filter({ hasText: 'source-two' });
   await expect(projectTwo).toContainText('1 次结果', { timeout: 30000 });
-  await expect(page.getByText('当前主图', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: /选择 改款/ })).toBeVisible();
   const projectOne = page.locator('.project').filter({ hasText: 'source-one' });
   await projectOne.click();
   await expect(projectOne).toContainText('1 次结果', { timeout: 30000 });
-  await expect(page.getByText('当前主图', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: /选择 改款/ })).toBeVisible();
   await page.getByRole('button', { name: /成片管理/ }).click();
   await expect(page.getByRole('heading', { name: '成片管理', exact: true })).toBeVisible();
   const finishedCard = page

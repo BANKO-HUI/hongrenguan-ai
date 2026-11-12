@@ -26,6 +26,16 @@ body,
   min-height: 100%;
   margin: 0;
 }
+html[data-theme='dark'],
+html[data-theme='dark'] body,
+html[data-theme='dark'] #root {
+  background-color: #0c0c0c;
+}
+html[data-theme='light'],
+html[data-theme='light'] body,
+html[data-theme='light'] #root {
+  background-color: #eef0f3;
+}
 .app-booting {
   min-height: 100vh;
   display: flex;

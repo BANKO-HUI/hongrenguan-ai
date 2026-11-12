@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
-import { applyTheme, resolveTheme, themeStorageKey } from '../src/theme.js';
+import { applyTheme, resolveTheme, themeColors, themeStorageKey } from '../src/theme.js';
 
 const themePath = new URL('../src/todo-panel-theme.css', import.meta.url);
 const theme = readFileSync(themePath, 'utf8');
@@ -236,6 +236,7 @@ test('Chat attachments, generation motion and result gallery stay compact and re
 
 test('light theme is complete, local, and persisted without touching project state', () => {
   const app = readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8');
+  const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
   assert.match(lightTheme, /:root\[data-theme='light'\]/);
   assert.match(lightTheme, /\.chat-workspace\.chat-native/);
   assert.match(lightTheme, /\.settings-detail/);
@@ -249,6 +250,9 @@ test('light theme is complete, local, and persisted without touching project sta
   assert.doesNotMatch(app, /executor\?\.authRequired\)[\s\S]*<LoginScreen/);
   assert.doesNotMatch(app, /StartupScreen|LoginScreen|\/auth\/login/);
   assert.match(app, /if \(!data\)[\s\S]*正在连接本机工作台/);
+  assert.match(app, /useLayoutEffect\(\(\) => \{[\s\S]*applyTheme\(theme\);[\s\S]*\}, \[theme\]\)/);
+  assert.doesNotMatch(app, /use(?:Layout)?Effect\(\(\) => applyTheme\(theme\)/);
+  assert.match(html, /badmark-theme-v1[\s\S]*document\.documentElement\.dataset\.theme = theme/);
   assert.match(lightTheme, /\*:hover::\-webkit-scrollbar-thumb/);
   assert.match(lightTheme, /@media \(max-width: 820px\)/);
   assert.doesNotMatch(lightTheme, /https?:\/\//);
@@ -263,7 +267,32 @@ test('light theme is complete, local, and persisted without touching project sta
   assert.equal(applyTheme('light', root, storage), 'light');
   assert.equal(root.dataset.theme, 'light');
   assert.equal(root.style.colorScheme, 'light');
+  assert.equal(root.style.backgroundColor, themeColors.light);
   assert.equal(saved.get(themeStorageKey), 'light');
+});
+
+test('theme application updates every browser canvas surface atomically', () => {
+  const body = { style: {} };
+  const meta = { setAttribute: (name, value) => (meta[name] = value) };
+  const root = {
+    dataset: {},
+    style: {},
+    ownerDocument: {
+      body,
+      querySelector: (selector) => (selector === 'meta[name="theme-color"]' ? meta : null),
+    },
+  };
+  const storage = { setItem() {} };
+
+  assert.equal(applyTheme('dark', root, storage), 'dark');
+  assert.equal(root.style.backgroundColor, themeColors.dark);
+  assert.equal(body.style.backgroundColor, themeColors.dark);
+  assert.equal(meta.content, themeColors.dark);
+
+  assert.equal(applyTheme('light', root, storage), 'light');
+  assert.equal(root.style.backgroundColor, themeColors.light);
+  assert.equal(body.style.backgroundColor, themeColors.light);
+  assert.equal(meta.content, themeColors.light);
 });
 
 test('Kanit display font files are bundled for offline use', () => {
