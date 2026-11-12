@@ -609,7 +609,11 @@ export function ProjectWorkspace({
   const customItems = (draft.customRefIds || [])
     .map((id) => data.materialLibrary.items.find((item) => item.id === id))
     .filter(Boolean);
+  const operationTasks = data.tasks.filter(
+    (task) => task.projectId === p.id && ['restyle', 'refine', 'white'].includes(task.kind),
+  );
   const historyPreviewItems = [
+    ...(p.sourceAssetId ? [{ src: assetUrl(p.sourceAssetId), title: `${p.name} · 项目原图` }] : []),
     ...p.history.flatMap((entry) =>
       entry.looks.map((look) => ({
         src: assetUrl(look.white || look.scene),
@@ -1568,7 +1572,7 @@ export function ProjectWorkspace({
                 </div>
                 <div>
                   <button className="outline-action" onClick={() => setHistory(true)}>
-                    历史版本
+                    操作历史
                   </button>
                   <button
                     className="outline-action danger-action"
@@ -1729,8 +1733,42 @@ export function ProjectWorkspace({
         </Modal>
       )}
       {history && (
-        <Modal title="历史版本" onClose={() => setHistory(false)}>
+        <Modal title="操作历史" onClose={() => setHistory(false)}>
           <div className="history-panel">
+            {p.sourceAssetId && (
+              <section>
+                <h3>项目原图</h3>
+                <div className="history-grid">
+                  <button
+                    onClick={() =>
+                      openHistoryPreview(assetUrl(p.sourceAssetId), `${p.name} · 项目原图`)
+                    }
+                  >
+                    <img src={assetUrl(p.sourceAssetId)} alt={`${p.name} 项目原图`} />
+                    <span>链路起点 · 查看大图</span>
+                  </button>
+                </div>
+              </section>
+            )}
+            {operationTasks.length > 0 && (
+              <section>
+                <h3>任务记录</h3>
+                <div className="operation-history-list">
+                  {operationTasks.map((task) => (
+                    <article key={task.id}>
+                      <div>
+                        <b>{taskNames[task.kind] || '图片处理'}</b>
+                        <span className={`task-status ${task.status}`}>
+                          {statusNames[task.status] || task.status}
+                        </span>
+                      </div>
+                      <small>{new Date(task.createdAt).toLocaleString()}</small>
+                      <p>{task.instruction || task.message || '未填写操作说明'}</p>
+                    </article>
+                  ))}
+                </div>
+              </section>
+            )}
             {p.history.map((entry, i) => (
               <section key={i}>
                 <h3>
@@ -1787,9 +1825,12 @@ export function ProjectWorkspace({
                   </div>
                 </section>
               ))}
-            {!p.history.length && !p.looks.some((l) => l.versions.length) && (
-              <p>尚无历史版本。重新生成与精修会自动保留原图。</p>
-            )}
+            {!p.sourceAssetId &&
+              !operationTasks.length &&
+              !p.history.length &&
+              !p.looks.some((l) => l.versions.length) && (
+                <p>尚无操作历史。每次改款与图片处理都会自动记录。</p>
+              )}
           </div>
         </Modal>
       )}

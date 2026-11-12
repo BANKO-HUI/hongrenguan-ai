@@ -119,6 +119,8 @@ const newProject = (input) => ({
   ...projectInput.parse(input),
   id: randomUUID(),
   revision: 0,
+  sourceAssetId: null,
+  sourceFilename: null,
   assets: {},
   analysis: null,
   confirmed: false,
@@ -182,6 +184,14 @@ const ensureTaskCompatible = (state, project, task, excludeId = null) => {
       '所选成片已有白底、精修或改款任务，请在任务中心处理后继续',
       409,
     );
+    if (task.kind === 'restyle' && task.sourceAssetId)
+      ensure(
+        !others.some(
+          (other) => other.kind === 'restyle' && other.sourceAssetId === task.sourceAssetId,
+        ),
+        '当前图片项目已有改款任务，请等待完成或结束后再继续',
+        409,
+      );
   }
 };
 const editableLayer = (result, task, index = 0) => ({
@@ -283,6 +293,8 @@ export class Workbench {
       for (const project of state.projects) project.archivedLooks ||= [];
       for (const project of state.projects) project.customRefIds ||= [];
       for (const project of state.projects) project.backgroundRefId ??= null;
+      for (const project of state.projects) project.sourceAssetId ??= null;
+      for (const project of state.projects) project.sourceFilename ??= null;
       state.outputDirectory ||= {
         path: '',
         enabled: false,
@@ -941,6 +953,28 @@ export class Workbench {
       if (!state.groups.includes(project.group)) state.groups.push(project.group);
       state.projects.unshift(project);
       return project;
+    });
+  }
+  async createImageProjects(files) {
+    ensure(Array.isArray(files) && files.length > 0, '请选择至少一张需要改款的图片');
+    const assets = await Promise.all(
+      files.map((file) => this.validateFile(file.buffer, file.filename, 'image')),
+    );
+    const projects = files.map((file, index) => {
+      const project = newProject({
+        name: file.filename.replace(/\.[^.]+$/, '').slice(0, 100) || `图片项目 ${index + 1}`,
+        group: '进行中',
+        lookCount: 1,
+      });
+      project.sourceAssetId = assets[index].id;
+      project.sourceFilename = file.filename;
+      project.confirmed = true;
+      return project;
+    });
+    return this.store.transaction((state) => {
+      for (const asset of assets) state.assets[asset.id] = asset;
+      state.projects.unshift(...projects);
+      return projects;
     });
   }
   updateProject(id, input) {

@@ -320,6 +320,17 @@ export function createApp(
   app.delete('/api/memory/:id', (req, res) => res.json(workbench.deleteMemory(req.params.id)));
   app.put('/api/output-directory', (req, res) => res.json(workbench.setOutputDirectory(req.body)));
   app.post('/api/output-directory/sync', (_req, res) => res.json(workbench.syncOutputDirectory()));
+  app.post('/api/image-projects', referenceUpload.array('files'), async (req, res) => {
+    ensure(req.files?.length, '请选择至少一张需要改款的图片');
+    res.status(201).json(
+      await workbench.createImageProjects(
+        req.files.map((file) => ({
+          buffer: file.buffer,
+          filename: Buffer.from(file.originalname, 'latin1').toString('utf8'),
+        })),
+      ),
+    );
+  });
   app.post('/api/projects', (req, res) => res.status(201).json(workbench.createProject(req.body)));
   app.patch('/api/projects/:id', (req, res) =>
     res.json(workbench.updateProject(req.params.id, req.body)),

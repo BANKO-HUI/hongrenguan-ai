@@ -161,13 +161,15 @@ test('large image previews share cursor-anchored wheel zoom and one lightbox sur
   assert.match(styles, /html\.image-gallery-open,[\s\S]*overflow:\s*hidden/);
 });
 
-test('startup delay, complete-image restyle mode and OpenAI model lists are wired', () => {
+test('direct startup, image-project restyle mode and OpenAI model lists are wired', () => {
   const app = readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8');
   const design = readFileSync(new URL('../src/DesignWorkspace.jsx', import.meta.url), 'utf8');
   const settings = readFileSync(new URL('../src/SettingsWorkspace.jsx', import.meta.url), 'utf8');
 
-  assert.match(app, /setStartupMinimumElapsed\(true\), 1200/);
-  assert.match(app, /!data \|\| !startupMinimumElapsed/);
+  assert.doesNotMatch(app, /StartupScreen|startupMinimumElapsed/);
+  assert.match(app, /if \(!data\)[\s\S]*className="app-booting"/);
+  assert.match(app, /request\('\/image-projects'/);
+  assert.match(design, /sourceMode === 'project' \? project\.sourceAssetId : null/);
   assert.match(design, /annotations: isRestyle \? annotations : \[\]/);
   assert.match(design, /layerMode: false/);
   assert.match(design, /localStorage\.setItem\([\s\S]*restyleDraftKey\(project\.id\)/);
@@ -234,7 +236,6 @@ test('Chat attachments, generation motion and result gallery stay compact and re
 
 test('light theme is complete, local, and persisted without touching project state', () => {
   const app = readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8');
-  const startup = readFileSync(new URL('../src/StartupScreen.jsx', import.meta.url), 'utf8');
   assert.match(lightTheme, /:root\[data-theme='light'\]/);
   assert.match(lightTheme, /\.chat-workspace\.chat-native/);
   assert.match(lightTheme, /\.settings-detail/);
@@ -246,9 +247,8 @@ test('light theme is complete, local, and persisted without touching project sta
   assert.match(lightTheme, /html\[data-theme='light'\] \.execution-handoff/);
   assert.match(lightTheme, /html\[data-theme='light'\] \.annotation-instructions/);
   assert.doesNotMatch(app, /executor\?\.authRequired\)[\s\S]*<LoginScreen/);
-  assert.match(app, /if \(!data\)[\s\S]*<StartupScreen/);
-  assert.match(startup, /帐号授权与第三方 API 统一在设置中管理/);
-  assert.doesNotMatch(startup, /\/auth\/login|API Key/);
+  assert.doesNotMatch(app, /StartupScreen|LoginScreen|\/auth\/login/);
+  assert.match(app, /if \(!data\)[\s\S]*正在连接本机工作台/);
   assert.match(lightTheme, /\*:hover::\-webkit-scrollbar-thumb/);
   assert.match(lightTheme, /@media \(max-width: 820px\)/);
   assert.doesNotMatch(lightTheme, /https?:\/\//);

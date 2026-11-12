@@ -26,6 +26,20 @@ body,
   min-height: 100%;
   margin: 0;
 }
+.app-booting {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: #77777c;
+  background: #f5f5f7;
+  font-size: 13px;
+}
+.app-booting svg,
+.spin {
+  animation: spin 0.9s linear infinite;
+}
 button,
 textarea {
   font: inherit;
@@ -84,6 +98,13 @@ textarea:focus-visible {
   place-items: center;
   color: white;
   background: #111;
+  overflow: hidden;
+}
+.brand-mark img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
 }
 .brand-row > div:nth-child(2) {
   min-width: 0;
@@ -1087,6 +1108,10 @@ textarea:focus-visible {
   width: 27px;
   height: 27px;
 }
+.project-heading > small {
+  color: #99999e;
+  font-size: 10px;
+}
 .project-groups {
   display: grid;
   gap: 5px;
@@ -1174,10 +1199,11 @@ textarea:focus-visible {
   height: 100%;
   object-fit: cover;
 }
-.project > span:last-child {
+.project > span:nth-child(2) {
   min-width: 0;
   display: flex;
   flex-direction: column;
+  flex: 1;
 }
 .project b {
   font-size: 12px;
@@ -1189,6 +1215,15 @@ textarea:focus-visible {
   color: #99999e;
   font-size: 10px;
   margin-top: 3px;
+}
+.image-project-running {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: #2c8550;
+  box-shadow: 0 0 0 4px rgba(44, 133, 80, 0.12);
+  animation: pulse 1.4s ease-in-out infinite;
 }
 .account {
   margin-top: auto;

@@ -29,6 +29,31 @@ test('new projects stay empty and optional references do not fake generation', (
   assert.throws(() => w.createProject({ name: 'Invalid', lookCount: 100 }));
 });
 
+test('each imported image becomes an independent project with a persistent source', async (t) => {
+  const { workbench: w } = fixture(t);
+  const created = await w.createImageProjects([
+    { buffer: await png('red'), filename: '红色夹克.png' },
+    { buffer: await png('blue'), filename: '蓝色风衣.png' },
+  ]);
+
+  assert.equal(created.length, 2);
+  assert.deepEqual(
+    created.map((project) => project.name),
+    ['红色夹克', '蓝色风衣'],
+  );
+  assert.ok(created.every((project) => project.confirmed && project.sourceAssetId));
+  assert.notEqual(created[0].sourceAssetId, created[1].sourceAssetId);
+
+  const state = w.publicState();
+  for (const project of created) {
+    const saved = state.projects.find((candidate) => candidate.id === project.id);
+    assert.equal(saved.sourceFilename, `${saved.name}.png`);
+    assert.equal(saved.lookCount, 1);
+    assert.equal(saved.looks.length, 0);
+    assert.equal(state.assets[saved.sourceAssetId].mime, 'image/png');
+  }
+});
+
 test('uploaded files survive restarts, PDF is actually read, invalid inputs rejected', async (t) => {
   const { workbench: w, directory } = fixture(t);
   const p = w.createProject({ name: 'Files' });

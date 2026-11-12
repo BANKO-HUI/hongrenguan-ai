@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  Aperture,
   Check,
+  ImagePlus,
   Images,
+  LoaderCircle,
   Menu,
   PanelLeftClose,
   Settings2,
@@ -10,11 +11,10 @@ import {
   WandSparkles,
   X,
 } from 'lucide-react';
-import { request, isActive, taskNames } from './api.js';
+import { request, assetUrl, isActive, taskNames } from './api.js';
 import { ProjectWorkspace } from './ProjectWorkspace.jsx';
 import { DesignWorkspace } from './DesignWorkspace.jsx';
 import { SettingsWorkspace } from './SettingsWorkspace.jsx';
-import { StartupScreen } from './StartupScreen.jsx';
 import { Empty, IconButton, ThemeToggle } from './components.jsx';
 import { applyTheme, readInitialTheme } from './theme.js';
 
@@ -40,8 +40,10 @@ const remember = (key, value) => {
 const visibleStep = (value) =>
   ['restyle', 'white', 'settings'].includes(value) ? value : 'restyle';
 
+const projectCover = (project) =>
+  project.looks?.at(-1)?.scene || project.sourceAssetId || project.looks?.[0]?.scene || null;
+
 export default function App() {
-  const [startupMinimumElapsed, setStartupMinimumElapsed] = useState(false);
   const [theme, setTheme] = useState(() => {
     const initial = readInitialTheme();
     document.documentElement.dataset.theme = initial;
@@ -56,14 +58,12 @@ export default function App() {
   const [settingsReturnStep, setSettingsReturnStep] = useState('restyle');
   const [settingsTab, setSettingsTab] = useState('account');
   const [restyleEntry, setRestyleEntry] = useState(null);
+  const [importing, setImporting] = useState(false);
   const [toast, setToast] = useState('');
+  const projectInput = useRef(null);
   const taskStatuses = useRef(null);
   const pollDelay = useRef(1200);
 
-  useEffect(() => {
-    const timer = window.setTimeout(() => setStartupMinimumElapsed(true), 1200);
-    return () => window.clearTimeout(timer);
-  }, []);
   useEffect(() => applyTheme(theme), [theme]);
 
   useEffect(() => {
@@ -76,9 +76,9 @@ export default function App() {
       );
       if (finished)
         setToast(
-          `${taskNames[finished.kind] || '任务'}${
+          `${finished.projectName || '图片项目'} · ${taskNames[finished.kind] || '任务'}${
             finished.status === 'completed'
-              ? '已完成，结果已进入成片管理'
+              ? '已完成，操作历史已保存'
               : '未完成，请在任务中心查看原因'
           }`,
         );
@@ -99,15 +99,7 @@ export default function App() {
     let timer;
     async function start() {
       try {
-        let next = await refresh();
-        if (!next.projects.length) {
-          await request('/projects', {
-            method: 'POST',
-            body: { name: '红人馆AI改款', group: next.groups[0] || '进行中' },
-          });
-          next = await refresh();
-        }
-        if (!projectId && next.projects[0]) setProjectId(next.projects[0].id);
+        await refresh();
       } catch (cause) {
         setConnected(false);
         setError(cause.message);
@@ -132,10 +124,15 @@ export default function App() {
     };
   }, []);
 
+  const imageProjects =
+    data?.projects.filter((project) => project.sourceAssetId || project.looks?.length) || [];
+
   useEffect(() => {
-    if (data && !data.projects.some((project) => project.id === projectId))
-      setProjectId(data.projects[0]?.id || '');
+    if (!data) return;
+    if (!imageProjects.some((project) => project.id === projectId))
+      setProjectId(imageProjects[0]?.id || '');
   }, [data, projectId]);
+
   useEffect(() => remember('hongren-active-workspace', projectId), [projectId]);
   useEffect(() => remember('hongren-step-v1', step), [step]);
   useEffect(() => {
@@ -157,9 +154,36 @@ export default function App() {
     }
   };
   const safe = (action) => action().catch(() => {});
-  const project = data?.projects.find((item) => item.id === projectId) || data?.projects[0];
+  const project = imageProjects.find((item) => item.id === projectId) || imageProjects[0];
   const workspaceStep = step === 'settings' ? settingsReturnStep : step;
   const pending = data?.tasks.filter(isActive).length || 0;
+
+  const selectProject = (id) => {
+    setProjectId(id);
+    setRestyleEntry(null);
+    if (window.innerWidth <= 820) setSidebar(false);
+  };
+
+  const importImageProjects = (files) =>
+    safe(async () => {
+      if (!files.length) return;
+      setImporting(true);
+      try {
+        const form = new FormData();
+        files.forEach((file) => form.append('files', file));
+        const created = await act(
+          () => request('/image-projects', { method: 'POST', form }),
+          files.length === 1 ? '图片项目已创建' : `已创建 ${files.length} 个图片项目`,
+        );
+        if (created[0]) {
+          setProjectId(created[0].id);
+          setRestyleEntry(null);
+          setStep('restyle');
+        }
+      } finally {
+        setImporting(false);
+      }
+    });
 
   const navigate = (nextStep) => {
     if (nextStep === 'restyle') setRestyleEntry(null);
@@ -195,22 +219,31 @@ export default function App() {
 
   const toggleTheme = () => setTheme((current) => (current === 'light' ? 'dark' : 'light'));
 
-  if (!data || !startupMinimumElapsed)
+  if (!data)
     return (
-      <StartupScreen
-        error={error}
-        onRetry={() => safe(() => refresh())}
-        theme={theme}
-        onToggleTheme={toggleTheme}
-      />
+      <div className="app-booting" role="status">
+        <LoaderCircle size={22} />
+        正在连接本机工作台…
+      </div>
     );
 
   return (
     <div className={`app-shell ${sidebar ? '' : 'sidebar-collapsed'}`}>
+      <input
+        ref={projectInput}
+        hidden
+        type="file"
+        multiple
+        accept="image/png,image/jpeg,image/webp,image/heic,image/heif,image/tiff"
+        onChange={(event) => {
+          importImageProjects([...(event.target.files || [])]);
+          event.target.value = '';
+        }}
+      />
       <aside className={`sidebar ${sidebar ? 'open' : ''}`}>
         <div className="brand-row">
           <div className="brand-mark">
-            <Aperture size={19} />
+            <img src="/assets/hongrenguan-icon.png" alt="" />
           </div>
           <div>
             <strong>红人馆AI</strong>
@@ -220,6 +253,14 @@ export default function App() {
             <PanelLeftClose size={18} />
           </IconButton>
         </div>
+        <button
+          className="new-project"
+          disabled={importing}
+          onClick={() => projectInput.current?.click()}
+        >
+          {importing ? <LoaderCircle className="spin" size={16} /> : <ImagePlus size={16} />}
+          {importing ? '正在导入…' : '添加图片项目'}
+        </button>
         <nav className="workflow-nav" aria-label="改款工作流程">
           <p className="nav-label">工作台</p>
           {steps.map(({ id, icon: Icon, label }, index) => (
@@ -236,7 +277,38 @@ export default function App() {
             </button>
           ))}
         </nav>
-        <div className="project-list" aria-hidden="true" />
+        <div className="project-list image-project-list">
+          <div className="project-heading">
+            <p className="nav-label">图片项目</p>
+            <small>{imageProjects.length}</small>
+          </div>
+          {imageProjects.map((item) => {
+            const cover = projectCover(item);
+            const activeTask = data.tasks.find(
+              (task) => task.projectId === item.id && isActive(task),
+            );
+            return (
+              <button
+                className={`project ${project?.id === item.id ? 'active' : ''}`}
+                key={item.id}
+                onClick={() => selectProject(item.id)}
+              >
+                <span className="project-thumb">
+                  {cover ? <img src={assetUrl(cover)} alt="" /> : <ImagePlus size={16} />}
+                </span>
+                <span>
+                  <b>{item.name}</b>
+                  <small>
+                    {activeTask
+                      ? `${taskNames[activeTask.kind] || '改图'} · 处理中`
+                      : `${item.looks.length} 次结果 · ${item.sourceFilename || '原图已保存'}`}
+                  </small>
+                </span>
+                {activeTask && <span className="image-project-running" aria-label="任务处理中" />}
+              </button>
+            );
+          })}
+        </div>
         <button
           className={`account ${step === 'settings' ? 'active' : ''}`}
           onClick={() => openSettings('account')}
@@ -261,7 +333,7 @@ export default function App() {
               </IconButton>
             )}
             <div className="project-title">
-              <strong>红人馆AI</strong>
+              <strong>{project?.name || '红人馆AI'}</strong>
               <span className={`save-state ${connected ? '' : 'offline'}`}>
                 <span />
                 {connected ? '本机服务正常' : '本机服务中断'}
@@ -317,6 +389,7 @@ export default function App() {
                 act={act}
                 safe={safe}
                 onTask={() => openSettings('tasks')}
+                onAddImages={() => projectInput.current?.click()}
                 initialSourceLookId={
                   restyleEntry?.projectId === project.id ? restyleEntry.lookId : null
                 }
@@ -334,8 +407,11 @@ export default function App() {
                 onRestyle={openRestyle}
               />
             ) : (
-              <Empty title="正在准备改款工作区">
-                <p>工作区创建完成后即可上传原图开始改款。</p>
+              <Empty title="添加第一张需要改款的图片">
+                <p>每张图片会建立独立项目，并保留自己的改款结果与操作历史。</p>
+                <button className="primary-action" onClick={() => projectInput.current?.click()}>
+                  <ImagePlus size={16} /> 添加图片
+                </button>
               </Empty>
             )}
           </div>

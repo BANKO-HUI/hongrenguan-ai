@@ -909,7 +909,16 @@ function RestyleComposer({
 import { sortImages } from './imageSort.js';
 import { ImageSortControl, useImageSort } from './ImageSortControl.jsx';
 
-export function DesignWorkspace({ type, project, data, act, safe, onTask, initialSourceLookId }) {
+export function DesignWorkspace({
+  type,
+  project,
+  data,
+  act,
+  safe,
+  onTask,
+  onAddImages,
+  initialSourceLookId,
+}) {
   const [imageOrder, setImageOrder] = useImageSort('design');
   const sortedLooks = sortImages(project.looks, imageOrder, data.assets);
   const isRestyle = type === 'restyle';
@@ -920,10 +929,8 @@ export function DesignWorkspace({ type, project, data, act, safe, onTask, initia
       ? savedRestyleDraft.sourceLookId
       : sortedLooks[0]?.id || '';
   const restoreSavedSource = isRestyle && savedRestyleDraft.sourceLookId === preferredLookId;
-  const [sourceMode, setSourceMode] = useState(project.looks.length ? 'look' : 'upload');
+  const [sourceMode, setSourceMode] = useState(project.looks.length ? 'look' : 'project');
   const [sourceLookId, setSourceLookId] = useState(preferredLookId);
-  const [sourceFile, setSourceFile] = useState(null);
-  const [sourceUrl, setSourceUrl] = useState('');
   const [references, setReferences] = useState([]);
   const [annotations, setAnnotations] = useState(() =>
     restoreSavedSource && Array.isArray(savedRestyleDraft.annotations)
@@ -946,15 +953,10 @@ export function DesignWorkspace({ type, project, data, act, safe, onTask, initia
   const [busy, setBusy] = useState(false);
   const [referencePreview, setReferencePreview] = useState(null);
   const [resultCanvasIndex, setResultCanvasIndex] = useState(null);
-  const sourceInput = useRef(null);
-  const sourceUrlRef = useRef('');
   const referencesRef = useRef([]);
   useEffect(() => {
     referencesRef.current = references;
   }, [references]);
-  useEffect(() => {
-    sourceUrlRef.current = sourceUrl;
-  }, [sourceUrl]);
   useEffect(() => {
     if (!isRestyle || sourceMode !== 'look' || !sourceLookId) return;
     localStorage.setItem(
@@ -964,20 +966,21 @@ export function DesignWorkspace({ type, project, data, act, safe, onTask, initia
   }, [isRestyle, project.id, sourceMode, sourceLookId, annotations, instruction]);
   useEffect(
     () => () => {
-      if (sourceUrlRef.current) URL.revokeObjectURL(sourceUrlRef.current);
       referencesRef.current.forEach((reference) => URL.revokeObjectURL(reference.url));
     },
     [],
   );
   const sourceLook = project.looks.find((look) => look.id === sourceLookId);
-  const source = sourceMode === 'look' ? assetUrl(sourceLook?.scene) : sourceUrl;
+  const source =
+    sourceMode === 'look' ? assetUrl(sourceLook?.scene) : assetUrl(project.sourceAssetId);
   const trendPromptOptions = isRestyle ? [] : extractTrendPrompts(project, data);
   const typeTasks = data.tasks.filter(
     (task) => task.projectId === project.id && task.kind === type,
   );
   const relevantTasks = typeTasks.filter((task) => {
-    if (sourceMode === 'look') return task.lookIds.includes(sourceLookId);
-    return task.id === launchedTaskId;
+    if (sourceMode === 'look')
+      return task.lookIds.includes(sourceLookId) || sourceLook?.taskId === task.id;
+    return task.sourceAssetId === project.sourceAssetId || task.id === launchedTaskId;
   });
   const activeTask = isRestyle ? relevantTasks.find(isActive) : typeTasks.find(isActive);
   const latestTask = relevantTasks[0];
@@ -1032,6 +1035,15 @@ export function DesignWorkspace({ type, project, data, act, safe, onTask, initia
   useEffect(() => {
     setResultCanvasIndex(null);
   }, [isRestyle, source, resultTask?.id]);
+  useEffect(() => {
+    if (sourceMode !== 'project' || !project.looks.length) return;
+    const latestLook = project.looks.at(-1);
+    setSourceMode('look');
+    setSourceLookId(latestLook.id);
+    setLaunchedTaskId('');
+    setAnnotations([]);
+    setResultCanvasIndex(null);
+  }, [project.looks, sourceMode]);
   const sourceConflict =
     isRestyle &&
     sourceMode === 'look' &&
@@ -1044,51 +1056,12 @@ export function DesignWorkspace({ type, project, data, act, safe, onTask, initia
     );
   const addMention = (label) =>
     setInstruction((current) => `${current.trim()} @${label.trim() || '参考'} `);
-  const selectSourceFile = (file) => {
-    if (!file) return;
-    if (sourceUrl) URL.revokeObjectURL(sourceUrl);
-    setSourceFile(file);
-    setSourceUrl(URL.createObjectURL(file));
-    setSourceMode('upload');
-    setLaunchedTaskId('');
-    setAnnotations([]);
-    setResultCanvasIndex(null);
-  };
-  const selectSourceFiles = (selected) => {
-    if (!selected.length) return;
-    const [sourceCandidate, ...referenceCandidates] = selected;
-    selectSourceFile(sourceCandidate);
-    if (!referenceCandidates.length) return;
-    setReferences((current) => {
-      const known = new Set(
-        current.map(({ file }) => `${file.name}:${file.size}:${file.lastModified}:${file.type}`),
-      );
-      const additions = referenceCandidates.filter((file) => {
-        const key = `${file.name}:${file.size}:${file.lastModified}:${file.type}`;
-        if (known.has(key)) return false;
-        known.add(key);
-        return true;
-      });
-      const usedMentions = current.map(({ label }) => label);
-      return [
-        ...current,
-        ...additions.map((file) => {
-          const label = uniqueMention(file.name, usedMentions);
-          usedMentions.push(label);
-          return { id: crypto.randomUUID(), file, url: URL.createObjectURL(file), label };
-        }),
-      ];
-    });
-  };
   const start = () =>
     safe(async () => {
       setBusy(true);
       try {
         await act(async () => {
-          const files = [
-            ...(sourceMode === 'upload' && sourceFile ? [sourceFile] : []),
-            ...references.map((reference) => reference.file),
-          ];
+          const files = references.map((reference) => reference.file);
           let assets = [];
           if (files.length) {
             const form = new FormData();
@@ -1099,7 +1072,7 @@ export function DesignWorkspace({ type, project, data, act, safe, onTask, initia
             });
             assets = uploaded.assets;
           }
-          const sourceAssetId = sourceMode === 'upload' ? assets.shift()?.id || null : null;
+          const sourceAssetId = sourceMode === 'project' ? project.sourceAssetId : null;
           const selectedDirections = trendPromptOptions
             .filter((option) => selectedTrendPrompts.has(option.id))
             .map((option) => option.prompt);
@@ -1156,17 +1129,6 @@ export function DesignWorkspace({ type, project, data, act, safe, onTask, initia
 
   return (
     <section className="page-scroll design-workspace">
-      <input
-        ref={sourceInput}
-        hidden
-        type="file"
-        multiple
-        accept="image/png,image/jpeg,image/webp,image/heic,image/heif,image/tiff"
-        onChange={(event) => {
-          selectSourceFiles([...(event.target.files || [])]);
-          event.target.value = '';
-        }}
-      />
       <div className="page-inner wide">
         <div className="page-heading design-heading">
           <div>
@@ -1193,63 +1155,35 @@ export function DesignWorkspace({ type, project, data, act, safe, onTask, initia
               <header>
                 <ImageSortControl value={imageOrder} onChange={setImageOrder} />
                 <div>
-                  <b>{isRestyle ? '原图' : '爆款原图'}</b>
-                  <span>选择已生成图或上传图片</span>
+                  <b>{sourceMode === 'look' ? '当前改款版本' : '当前图片项目'}</b>
+                  <span>{sourceMode === 'look' ? '选择历史成片继续改款' : '原图已固定保存'}</span>
                 </div>
-                <button onClick={() => sourceInput.current?.click()}>
-                  <Upload size={14} /> {sourceFile ? '更换图片' : '上传图片'}
+                <button onClick={onAddImages}>
+                  <Upload size={14} /> 添加图片项目
                 </button>
               </header>
-              {project.looks.length > 0 && (
-                <>
-                  <div className="segmented source-mode">
+              {project.looks.length > 0 && sourceMode === 'look' && (
+                <ImageScrollRail
+                  className="source-look-strip"
+                  label={isRestyle ? '改款原图滚动栏' : '爆款原图滚动栏'}
+                >
+                  {sortedLooks.map((look) => (
                     <button
-                      className={sourceMode === 'look' ? 'active' : ''}
+                      className={look.id === sourceLookId ? 'active' : ''}
+                      key={look.id}
+                      aria-label={`选择 ${look.title}`}
                       onClick={() => {
-                        setSourceMode('look');
+                        setSourceLookId(look.id);
                         setLaunchedTaskId('');
                         setResultCanvasIndex(null);
                         if (isRestyle) setAnnotations([]);
                       }}
                     >
-                      已生成图
+                      <img src={assetUrl(look.scene)} alt={look.title} />
+                      {look.id === sourceLookId && <Check size={12} />}
                     </button>
-                    <button
-                      className={sourceMode === 'upload' ? 'active' : ''}
-                      onClick={() => {
-                        setSourceMode('upload');
-                        setLaunchedTaskId('');
-                        setResultCanvasIndex(null);
-                        if (isRestyle) setAnnotations([]);
-                      }}
-                    >
-                      上传图片
-                    </button>
-                  </div>
-                  {sourceMode === 'look' && (
-                    <ImageScrollRail
-                      className="source-look-strip"
-                      label={isRestyle ? '改款原图滚动栏' : '爆款原图滚动栏'}
-                    >
-                      {sortedLooks.map((look) => (
-                        <button
-                          className={look.id === sourceLookId ? 'active' : ''}
-                          key={look.id}
-                          aria-label={`选择 ${look.title}`}
-                          onClick={() => {
-                            setSourceLookId(look.id);
-                            setLaunchedTaskId('');
-                            setResultCanvasIndex(null);
-                            if (isRestyle) setAnnotations([]);
-                          }}
-                        >
-                          <img src={assetUrl(look.scene)} alt={look.title} />
-                          {look.id === sourceLookId && <Check size={12} />}
-                        </button>
-                      ))}
-                    </ImageScrollRail>
-                  )}
-                </>
+                  ))}
+                </ImageScrollRail>
               )}
             </section>
             {isRestyle && resultCanvasItem && resultCanvasItem.src !== source ? (

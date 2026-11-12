@@ -39,6 +39,21 @@ test('HTTP auth, origin checks, upload persistence and private plugin boundary',
   assert.equal(created.status, 201);
   const p = await created.json();
   assert.equal((await call('/api/state', { headers: { Cookie: cookie } })).status, 200);
+  const imageProjectsForm = new FormData();
+  imageProjectsForm.append('files', new Blob([await png('red')]), 'jacket.png');
+  imageProjectsForm.append('files', new Blob([await png('blue')]), 'coat.png');
+  const imageProjectsResponse = await call('/api/image-projects', {
+    method: 'POST',
+    headers: { 'X-Badmark-Token': token },
+    body: imageProjectsForm,
+  });
+  assert.equal(imageProjectsResponse.status, 201);
+  const imageProjects = await imageProjectsResponse.json();
+  assert.deepEqual(
+    imageProjects.map((project) => project.name),
+    ['jacket', 'coat'],
+  );
+  assert.ok(imageProjects.every((project) => project.sourceAssetId));
   assert.equal(
     (
       await call('/api/projects', {
@@ -425,7 +440,13 @@ test('HTTP protects saved API profile management and never echoes submitted keys
     roles: { analysis: true, image: false },
   };
   assert.equal(
-    (await fetch(`${base}/api/providers`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })).status,
+    (
+      await fetch(`${base}/api/providers`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+    ).status,
     401,
   );
   const token = (await (await fetch(`${base}/api/session`)).json()).token;
@@ -438,7 +459,13 @@ test('HTTP protects saved API profile management and never echoes submitted keys
   assert.equal(created.status, 201);
   assert.doesNotMatch(await created.text(), /never-echo-this-key/);
   assert.equal(
-    (await fetch(`${base}/api/providers/profile-1`, { method: 'PATCH', headers, body: JSON.stringify({ enabled: false }) })).status,
+    (
+      await fetch(`${base}/api/providers/profile-1`, {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify({ enabled: false }),
+      })
+    ).status,
     200,
   );
   assert.equal(

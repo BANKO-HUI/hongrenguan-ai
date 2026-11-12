@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { modelLabel } from '../src/api.js';
 
 const read = (relative) => readFileSync(new URL(relative, import.meta.url), 'utf8');
@@ -15,7 +15,6 @@ test('visible application branding is consistently named 红人馆AI', () => {
   const files = [
     '../index.html',
     '../src/App.jsx',
-    '../src/StartupScreen.jsx',
     '../desktop/main.js',
     '../electron-builder.yml',
   ].map(read);
@@ -25,6 +24,8 @@ test('visible application branding is consistently named 红人馆AI', () => {
   const builder = files.at(-1);
   assert.match(builder, /productName: 红人馆AI/);
   assert.match(builder, /artifactName: Hongrenguan-AI-/);
+  assert.equal(existsSync(new URL('../public/assets/hongrenguan-icon.png', import.meta.url)), true);
+  assert.match(files[1], /\/assets\/hongrenguan-icon\.png/);
 });
 
 test('the application shell exposes only restyle and finished-image workspaces', () => {
@@ -34,6 +35,8 @@ test('the application shell exposes only restyle and finished-image workspaces',
   assert.doesNotMatch(app, /ChatWorkspace|LibraryWorkspace/);
   assert.match(app, /id: 'restyle'.*label: '改款中心'/);
   assert.match(app, /id: 'white'.*label: '成片管理'/);
+  assert.match(app, /添加图片项目/);
+  assert.doesNotMatch(app, /StartupScreen|LoginScreen/);
 });
 
 test('restyle tasks always use complete-image results without layer controls', () => {
