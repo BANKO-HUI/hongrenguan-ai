@@ -75,6 +75,6 @@ export function resolveBundledAiBinary({
     ? [path.join(resourcesPath, 'app.asar.unpacked', relative), path.join(appPath, relative)]
     : [path.join(appPath, relative)];
   const binary = candidates.find((candidate) => fileExists(candidate));
-  if (!binary) throw new Error(`Bomi智绘桌面运行组件不完整，请重新安装。缺少：${relative}`);
+  if (!binary) throw new Error(`红人馆AI桌面运行组件不完整，请重新安装。缺少：${relative}`);
   return binary;
 }

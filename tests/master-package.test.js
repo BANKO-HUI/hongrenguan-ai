@@ -27,7 +27,8 @@ test('master release is complete, checksum-verified and free of runtime data', (
   const result = verifyMasterKit();
   assert.ok(result.files > 25);
   const manifest = JSON.parse(readFileSync(path.join(result.packagedRoot, 'MASTER-MANIFEST.json')));
-  assert.equal(manifest.name, 'Bomi智绘 黄金母版3.0');
+  assert.equal(manifest.name, '红人馆AI 黄金母版3.0');
+  assert.equal(manifest.application.name, '红人馆AI');
   assert.equal(manifest.version, '3.0');
   assert.equal(manifest.application.version, '3.4.4');
   assert.equal(manifest.sourceTag, 'golden-master-3.0');

@@ -63,7 +63,7 @@ const filesForm = (filenames) => {
 
 tool(
   'open_workbench',
-  '启动或连接本机 Bomi智绘工作台，返回可在应用浏览器中打开的 URL。',
+  '启动或连接本机红人馆AI工作台，返回可在应用浏览器中打开的 URL。',
   {},
   async () => {
     await ensureService();
@@ -128,7 +128,7 @@ tool(
 );
 tool(
   'list_memories',
-  '读取 Bomi智绘本机长期记忆。返回用户确认的全局偏好、项目规则和成片正负反馈；不会读取已停用记忆，除非 archived=true。',
+  '读取红人馆AI本机长期记忆。返回用户确认的全局偏好、项目规则和成片正负反馈；不会读取已停用记忆，除非 archived=true。',
   {
     projectId: id.optional(),
     archived: z.boolean().default(false),
@@ -455,7 +455,7 @@ tool(
     });
     const folder = path.join(directory, 'deliveries');
     mkdirSync(folder, { recursive: true });
-    const filename = path.join(folder, `Bomi智绘-${projectId}-${randomUUID()}.zip`);
+    const filename = path.join(folder, `红人馆AI-${projectId}-${randomUUID()}.zip`);
     writeFileSync(filename, buffer, { mode: 0o600 });
     return { path: filename, bytes: buffer.length };
   },

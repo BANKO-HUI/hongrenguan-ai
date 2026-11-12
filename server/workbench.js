@@ -656,7 +656,7 @@ export class Workbench {
     const project = this.store.state.projects.find((item) => item.id === task?.projectId);
     const extension = path.extname(asset.filename || '') || '.png';
     const parts = [
-      'Bomi智绘',
+      '红人馆AI',
       safeFilePart(project?.name || task?.projectName || '未归档项目'),
       safeFilePart(outputKindNames[task?.kind] || task?.kind || '生成结果'),
       `LOOK_${String(slot || 1).padStart(2, '0')}`,

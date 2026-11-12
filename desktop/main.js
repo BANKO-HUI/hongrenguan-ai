@@ -15,7 +15,7 @@ function createWindow(url, appPath = app.getAppPath()) {
     minHeight: 680,
     show: false,
     backgroundColor: '#f6f4ef',
-    title: 'Bomi智绘',
+    title: '红人馆AI',
     autoHideMenuBar: true,
     webPreferences: {
       contextIsolation: true,
@@ -76,7 +76,7 @@ async function startDesktop() {
   mainWindow = createWindow(runtime.url, appPath);
 }
 
-app.setName('Bomi智绘');
+app.setName('红人馆AI');
 ipcMain.handle('bomi:select-output-directory', async (event) => {
   if (!mainWindow || event.sender !== mainWindow.webContents) return '';
   const result = await dialog.showOpenDialog(mainWindow, {
@@ -90,7 +90,7 @@ app
   .whenReady()
   .then(startDesktop)
   .catch((error) => {
-    dialog.showErrorBox('Bomi智绘无法启动', error.message);
+    dialog.showErrorBox('红人馆AI无法启动', error.message);
     app.quit();
   });
 

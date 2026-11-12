@@ -5,6 +5,7 @@ build/icon.png
 .badmark/
 playwright-report/
 test-results/
+releases/
 .DS_Store
 
 npm-debug.log*

@@ -605,7 +605,7 @@ export class OpenAICompatibleProvider {
     const content = [{ type: 'input_text', text }, ...this.responseImageParts(images)];
     const body = {
       model: model || this.config.textModel,
-      instructions: '你是 Bomi智绘服装工作台的执行引擎。只返回符合指定 JSON Schema 的 JSON。',
+      instructions: '你是红人馆AI服装改款工作台的执行引擎。只返回符合指定 JSON Schema 的 JSON。',
       input: [{ role: 'user', content }],
       text: {
         format: {
@@ -661,7 +661,7 @@ export class OpenAICompatibleProvider {
         {
           role: 'system',
           content:
-            '你是 Bomi智绘服装工作台的执行引擎。只返回符合指定 JSON Schema 的 JSON，不要返回 Markdown。',
+            '你是红人馆AI服装改款工作台的执行引擎。只返回符合指定 JSON Schema 的 JSON，不要返回 Markdown。',
         },
         { role: 'user', content },
       ],

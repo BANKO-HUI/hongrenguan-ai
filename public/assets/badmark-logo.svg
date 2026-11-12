@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 280" role="img" aria-label="Bomi智绘">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 280" role="img" aria-label="红人馆AI">
   <rect width="640" height="280" fill="#e8e8e8"/>
   <ellipse cx="342" cy="140" rx="250" ry="82" fill="none" stroke="#171717" stroke-width="22" transform="rotate(2 342 140)"/>
   <rect x="80" y="82" width="430" height="120" fill="#e8e8e8"/>
-  <text x="104" y="174" font-family="Arial, Helvetica, sans-serif" font-size="112" font-weight="900" font-style="italic" fill="#171717">BOMI</text>
+  <text x="104" y="174" font-family="Arial, Helvetica, sans-serif" font-size="92" font-weight="900" font-style="italic" fill="#171717">HRG AI</text>
 </svg>

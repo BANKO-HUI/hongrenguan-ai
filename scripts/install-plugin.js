@@ -90,7 +90,7 @@ export function installPlugin({
       stdio: 'inherit',
     });
     if (result.error) throw result.error;
-    if (result.status !== 0) throw new Error('Bomi智绘智能组件安装失败。');
+    if (result.status !== 0) throw new Error('红人馆AI智能组件安装失败。');
   }
   return { name, destination, marketplacePath };
 }

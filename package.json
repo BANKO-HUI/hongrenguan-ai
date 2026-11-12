@@ -1,7 +1,7 @@
 {
   "name": "badmark-studio",
-  "description": "Bomi智绘本机服装设计与 AI 图片工作台",
-  "author": "Bomi智绘",
+  "description": "红人馆AI本机服装改款与成片管理工作台",
+  "author": "红人馆AI",
   "private": true,
   "version": "3.4.4",
   "type": "module",

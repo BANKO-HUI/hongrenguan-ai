@@ -1,5 +1,5 @@
-appId: com.bomi.zhihui
-productName: Bomi智绘
+appId: com.hongrenguan.ai
+productName: 红人馆AI
 asar: true
 directories:
   output: .desktop-build
@@ -15,14 +15,14 @@ afterPack: scripts/verify-desktop-package.cjs
 asarUnpack:
   - node_modules/**/*.node
   - node_modules/@openai/codex-*/vendor/**/*
-artifactName: Bomi-Zhihui-${version}-${os}-${arch}.${ext}
+artifactName: Hongrenguan-AI-${version}-${os}-${arch}.${ext}
 mac:
   category: public.app-category.graphics-design
   icon: build/icon.png
   identity: null
   target: dmg
 dmg:
-  title: Bomi智绘 ${version}
+  title: 红人馆AI ${version}
   writeUpdateInfo: false
 win:
   icon: build/icon.png

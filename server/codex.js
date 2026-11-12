@@ -81,7 +81,7 @@ export async function inspectCodex() {
             imageGeneration: false,
             model: null,
             models: [],
-            message: '尚未登录 Bomi智绘账号，请先完成授权。',
+            message: '尚未登录红人馆AI账号，请先完成授权。',
           });
           return;
         }
@@ -222,7 +222,7 @@ function createLoginAttempt() {
     }
   });
   send(1, 'initialize', {
-    clientInfo: { name: 'badmark_workbench', title: 'Bomi智绘', version: '3.3.0' },
+    clientInfo: { name: 'badmark_workbench', title: '红人馆AI', version: '3.3.0' },
     capabilities: { experimentalApi: true },
   });
   return start;
@@ -312,7 +312,7 @@ class AccountAppServer {
     });
     createInterface({ input: this.child.stdout }).on('line', (line) => this.receive(line));
     this.starting = this.requestRaw('initialize', {
-      clientInfo: { name: 'badmark_workbench', title: 'Bomi智绘', version: '3.3.0' },
+      clientInfo: { name: 'badmark_workbench', title: '红人馆AI', version: '3.3.0' },
       capabilities: { experimentalApi: true, requestAttestation: false },
     })
       .then(() => {

@@ -7,10 +7,8 @@ import {
   ArrowRight,
   Check,
   Columns2,
-  GitFork,
   Image,
   LayoutGrid,
-  Layers3,
   Plus,
   RefreshCw,
   Search,
@@ -288,7 +286,6 @@ export function ProjectWorkspace({
   safe,
   onTask,
   onRestyle,
-  onViral,
 }) {
   const [draft, setDraft] = useState(() => {
     try {
@@ -1006,11 +1003,6 @@ export function ProjectWorkspace({
                       </span>
                       <strong>{current.title}</strong>
                     </div>
-                    {!current.live && current.editLayers?.length > 0 && (
-                      <span className="hero-layer-badge">
-                        <Layers3 size={12} /> {current.editLayers.length} 个待确认图层
-                      </span>
-                    )}
                   </div>
                 ) : (
                   <div className="hero-output generation-waiting-hero" aria-live="polite">
@@ -1329,8 +1321,6 @@ export function ProjectWorkspace({
                   ['pending', '待处理'],
                   ['white', '白底图'],
                   ['adjusted', '已调整'],
-                  ['series', '系列生成'],
-                  ['viral', '爆款裂变'],
                   ['restyle', '改款新增'],
                   ['archived', `归档 ${archivedLooks.length}`],
                 ].map(([id, label]) => (
@@ -1405,11 +1395,6 @@ export function ProjectWorkspace({
                           alt={l.title}
                         />
                       </button>
-                      {l.editLayers?.length > 0 && (
-                        <span className="pending-layer-badge">
-                          <Layers3 size={11} /> {l.editLayers.length} 个待确认
-                        </span>
-                      )}
                       <span
                         className={`asset-badge ${filter === 'archived' || l.white ? 'ready' : l.live ? 'live' : ''}`}
                       >
@@ -1423,8 +1408,8 @@ export function ProjectWorkspace({
                       </span>
                       <span className={`origin-badge ${l.originKind || 'legacy'}`}>
                         {{
-                          series: '系列生成',
-                          viral: '爆款裂变',
+                          series: '历史成片',
+                          viral: '历史成片',
                           restyle: '改款新增',
                           legacy: '历史成片',
                         }[l.originKind || 'legacy'] || '其它生成'}
@@ -1486,17 +1471,12 @@ export function ProjectWorkspace({
                             款式调整
                           </button>
                           <button
-                            disabled={lookLocked(l) || l.editLayers?.length > 0}
-                            title={l.editLayers?.length ? '请先合并或清空待确认图层' : ''}
+                            disabled={lookLocked(l)}
                             onClick={() => queue({ kind: 'white', lookIds: [l.id] })}
                           >
                             {l.white ? '更新白底' : '生成白底'}
                           </button>
-                          <button
-                            disabled={busy || l.editLayers?.length > 0}
-                            title={l.editLayers?.length ? '请先合并待确认图层' : ''}
-                            onClick={() => downloadLook(l)}
-                          >
+                          <button disabled={busy} onClick={() => downloadLook(l)}>
                             <ArrowDownToLine size={13} />
                             下载
                           </button>
@@ -1518,14 +1498,7 @@ export function ProjectWorkspace({
                                 : '不喜欢，后续避免'}
                             </button>
                             <button
-                              disabled={busy || l.live || l.editLayers?.length > 0}
-                              onClick={() => onViral(l.id)}
-                            >
-                              <GitFork size={14} />
-                              加入爆款裂变
-                            </button>
-                            <button
-                              disabled={lookLocked(l) || l.editLayers?.length > 0}
+                              disabled={lookLocked(l)}
                               onClick={() =>
                                 queue({
                                   kind: 'refine',
@@ -1540,7 +1513,7 @@ export function ProjectWorkspace({
                               重新生成
                             </button>
                             <button
-                              disabled={locked || l.live || l.editLayers?.length > 0}
+                              disabled={locked || l.live}
                               onClick={() => manageLook(l, 'archive')}
                             >
                               <Archive size={14} />

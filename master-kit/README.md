@@ -1,107 +1,51 @@
-# Bomi智绘 黄金母版3.0
+# 红人馆AI 3.4.4
 
-这个资产包保存 Bomi智绘工作台已经验证过的完整工作流：共享趋势与素材库、系列生成、区域改款、爆款裂变、成片版本、白底图、任务并发、失败续做、MCP 对话入口和 ZIP 交付。
+红人馆AI是一套本机服装改款工作台，界面只保留“改款中心”和“成片管理”两个业务板块。
 
-包内只有程序、插件、提示词和测试，不包含任何项目数据库、上传文件、生成图片、日志、账号凭据或本机路径。把 ZIP 移到另一台电脑后，可以恢复一套干净的 Bomi智绘，也可以创建一个名称和端口独立的新工作台。
+## 完整改款链路
 
-## 环境要求
+1. 在改款中心上传原图，或选择成片管理中的已有图片。
+2. 使用圆形、方形或涂鸦标注调整区与锁定区。
+3. 可添加并命名多张参考图，在唯一的调整说明框中用 `@区域` 和 `@参考图` 精确引用。
+4. 点击发送后直接创建并执行完整图片改款任务，不产生待合并图层。
+5. 改款结果自动进入成片管理，可继续改款、生成或更新白底图、查看历史版本、下载、归档和导出。
 
-- macOS、Windows 或 Linux
-- Node.js 20.9 或更高版本
-- 安装包会自动安装锁定的本机 AI 运行组件
-- 首次安装依赖时可访问 npm 软件源
+设置入口保留帐号授权、任务中心、API 管理和成片文件夹绑定，这些能力用于保障改款任务完整执行。
 
-以上要求适用于源码母版安装。已经构建好的 Bomi智绘 DMG、Windows 安装程序或 AppImage 会内置运行环境，不需要用户单独安装 Node.js。
+## 启动
 
-## 在另一台电脑恢复 Bomi智绘
-
-1. 解压 `bomi-golden-master-3.0.zip`。
-2. macOS 双击 `install.command`，Windows 双击 `install.cmd`。
-3. 也可在终端手动执行：
+环境要求为 Node.js 20.9 或更高版本。首次使用：
 
 ```sh
-node master-kit/scripts/bootstrap.mjs
-```
-
-安装器会依次检查环境、安装锁定依赖与 AI 运行组件、运行单元测试、构建正式前端并安装智能组件。双击安装时会自动打开；手动安装完成后执行：
-
-```sh
+npm ci
+npm run build
 npm run open
 ```
 
-正式服务为 `http://127.0.0.1:4174/`。首次打开显示 Bomi智绘启动页，帐号与 API 授权在设置中管理。Chat 模式已内置多轮对话、参考图生成和趋势资料分析。
-
-如果只想先验证网页，不安装智能组件：
+默认地址为 `http://127.0.0.1:4174/`。若端口已被占用，可指定独立端口：
 
 ```sh
-node master-kit/scripts/bootstrap.mjs --skip-plugin
+BADMARK_PORT=4184 npm run open
 ```
 
-完整浏览器验收会额外安装 Playwright Chromium：
+## 验证
 
 ```sh
-node master-kit/scripts/bootstrap.mjs --full
-```
-
-在对应操作系统上生成免 Node.js 的桌面安装包：
-
-```sh
-# macOS DMG
-npm run desktop:dist
-
-# Windows NSIS 安装程序（在 Windows 上执行）
-npm run desktop:dist:win
-```
-
-桌面应用把项目、上传文件和生成结果保存在系统应用数据目录，升级或替换应用本体不会覆盖这些数据。未签名的本地 macOS 构建首次打开时可能需要在 Finder 中右键选择“打开”。
-
-## 创建一个独立的新工作台
-
-先复制配置模板并修改名称、插件 ID 和端口：
-
-```sh
-cp master-kit/project.config.example.json my-workbench.json
-```
-
-然后执行：
-
-```sh
-node master-kit/scripts/create-workbench.mjs /绝对路径/我的新工作台 --config my-workbench.json
-```
-
-Windows 示例：
-
-```powershell
-node master-kit/scripts/create-workbench.mjs "D:\\Workbenches\\my-fashion-studio" --config my-workbench.json
-```
-
-初始化器会复制工作流内核，更新产品名、插件 ID、MCP 名称和前后端端口，并保持内部数据模型、任务状态机、版本保护和测试合同。进入新目录后运行 `node master-kit/scripts/bootstrap.mjs` 完成安装。
-
-## 母版结构
-
-- `src/`：正式 React 工作台界面。
-- `server/`：文件仓库、任务状态机、并发执行器、HTTP 与 MCP。
-- `plugins/<plugin-id>/`：智能组件清单和工作流技能。
-- `tests/`：工作流合同测试和浏览器验收。
-- `master-kit/AI-REPLICATION-PROMPT.md`：交给 AI 的复刻约束。
-- `master-kit/project.config.example.json`：新工作台配置模板。
-- `scripts/install-plugin.js`：自动适配当前电脑路径的插件安装器。
-- `GOLDEN-TEMPLATE.json`：黄金母版名称、版本与 Git 标记。
-
-## 数据迁移
-
-干净母版不会携带业务数据。需要把原电脑上的项目、上传文件和成片一起迁移时，在关闭工作台服务后单独复制原项目目录中的 `.badmark/` 到新电脑对应工作台根目录。恢复前保留新电脑现有 `.badmark/` 备份。
-
-同一台电脑同时运行多个派生工作台时，每个项目必须使用不同的 `frontendPort`、`backendPort` 和 `pluginId`。
-
-## 更新和再打包
-
-在母版源码中完成修改并通过验收后执行：
-
-```sh
-npm run check
+npm test
+npm run build
+npm run test:e2e
 npm run master:package
 npm run master:verify
 ```
 
-新的发布目录和 ZIP 会生成到 `releases/`。每次业务改动都应同步测试并创建独立 Git commit。
+端到端验收覆盖“上传原图 → 生成改款 → 进入成片管理 → 生成白底”的完整链路。
+
+## 源码结构
+
+- `src/App.jsx`：红人馆AI双板块应用壳。
+- `src/DesignWorkspace.jsx`：改款中心，包括标注、参考图、说明与实时结果。
+- `src/ProjectWorkspace.jsx`：成片管理、白底、版本、下载和归档。
+- `server/`：本机数据、任务执行、图片生成与文件接口。
+- `tests/e2e/restyle-only.spec.js`：改款全链路浏览器验收。
+
+所有业务图片、任务状态和帐号配置保存在本机数据目录。源码母版与发行包不包含用户项目、上传文件、生成图片、凭据或日志。

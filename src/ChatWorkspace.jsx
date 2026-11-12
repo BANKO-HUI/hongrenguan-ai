@@ -783,7 +783,7 @@ export function ChatWorkspace({
 
   const shareConversation = async () => {
     const text = active.messages
-      .map((message) => `${message.role === 'user' ? '我' : 'Bomi智绘'}：${message.content}`)
+      .map((message) => `${message.role === 'user' ? '我' : '红人馆AI'}：${message.content}`)
       .join('\n\n');
     await navigator.clipboard?.writeText(text);
   };

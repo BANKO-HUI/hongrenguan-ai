@@ -59,7 +59,7 @@ test('uploads accept files beyond the former 30 MB boundary', async (t) => {
 
 test('generated images mirror to a bound local output folder and existing results can sync', async (t) => {
   const { workbench: w, directory } = fixture(t);
-  const outputDirectory = path.join(path.dirname(directory), 'Bomi智绘成片');
+  const outputDirectory = path.join(path.dirname(directory), '红人馆AI成片');
   mkdirSync(outputDirectory);
 
   assert.throws(
@@ -79,7 +79,7 @@ test('generated images mirror to a bound local output folder and existing result
   await series(w, project.id, ['green', 'yellow']);
   const generatedFiles = readdirSync(outputDirectory);
   assert.equal(generatedFiles.length, 2);
-  assert.ok(generatedFiles.every((filename) => filename.startsWith('Bomi智绘_')));
+  assert.ok(generatedFiles.every((filename) => filename.startsWith('红人馆AI_')));
   assert.ok(generatedFiles.every((filename) => existsSync(path.join(outputDirectory, filename))));
   assert.equal(w.publicState().outputDirectory.lastSavedFile, generatedFiles.at(-1));
 

@@ -26,5 +26,5 @@ export async function launchWorkbench({ platform = process.platform, open = true
 const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 if (isMain) {
   const url = await launchWorkbench({ open: !process.argv.includes('--no-open') });
-  console.log(`Bomi智绘工作台已启动：${url}`);
+  console.log(`红人馆AI工作台已启动：${url}`);
 }

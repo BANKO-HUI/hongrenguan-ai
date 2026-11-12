@@ -20,7 +20,6 @@ import {
 } from 'lucide-react';
 import { modelLabel, request } from './api.js';
 import { isDesktopShell, openAuthorizationUrl } from './auth.js';
-import { MemoryWorkspace } from './MemoryWorkspace.jsx';
 import { SmartConcurrencyStatus, TaskCenter } from './components.jsx';
 import {
   OPENAI_ANALYSIS_MODEL,
@@ -29,7 +28,6 @@ import {
 } from '../shared/openai-defaults.js';
 
 const tabs = [
-  { id: 'memory', label: '记忆', detail: '偏好与品牌规则', icon: Brain },
   { id: 'account', label: '帐号管理', detail: '授权与套餐状态', icon: CircleUserRound },
   { id: 'tasks', label: '任务中心', detail: '进度与执行控制', icon: ListTodo },
   { id: 'api', label: 'API 管理', detail: '模型、智能并发与连接', icon: PlugZap },
@@ -156,8 +154,8 @@ function AccountSettings({ executor, onRefresh }) {
         </article>
         <article>
           <Brain size={18} />
-          <strong>帐号与记忆分离</strong>
-          <p>设计偏好只保存在本机工作台，不会写入帐号资料。</p>
+          <strong>帐号与图片分离</strong>
+          <p>原图、参考图和成片只保存在本机工作台，不会写入帐号资料。</p>
         </article>
       </div>
     </section>
@@ -200,7 +198,7 @@ function OutputDirectorySettings({ config = {}, act, safe }) {
         </span>
         <div>
           <h1>成片文件夹</h1>
-          <p>绑定本地文件夹后，每个新生成的成片与局部图层都会自动保存一份副本。</p>
+          <p>绑定本地文件夹后，每个新生成的完整改款成片都会自动保存一份副本。</p>
         </div>
       </header>
       <div className={`output-directory-card ${config.enabled ? 'ready' : ''}`}>
@@ -225,7 +223,7 @@ function OutputDirectorySettings({ config = {}, act, safe }) {
         <div>
           <input
             value={directory}
-            placeholder="例如：/Users/你的名字/Pictures/Bomi智绘成片"
+            placeholder="例如：/Users/你的名字/Pictures/红人馆AI成片"
             onChange={(event) => setDirectory(event.target.value)}
           />
           <button className="outline-action" type="button" onClick={chooseDirectory}>
@@ -896,7 +894,7 @@ export function SettingsWorkspace({
           工作台设置
         </span>
         <h1>设置</h1>
-        <p>统一管理长期记忆、帐号授权、任务执行和 AI 接口。</p>
+        <p>统一管理帐号授权、改款任务、成片文件夹和 AI 接口。</p>
       </header>
       <div className="settings-layout">
         <nav className="settings-nav" aria-label="设置分类">
@@ -909,11 +907,6 @@ export function SettingsWorkspace({
                 <strong>{label}</strong>
                 <small>{detail}</small>
               </span>
-              {id === 'memory' && (
-                <em>
-                  {data.memory?.entries?.filter((entry) => entry.status === 'active').length || 0}
-                </em>
-              )}
               {id === 'tasks' && (
                 <em>
                   {
@@ -927,9 +920,6 @@ export function SettingsWorkspace({
           ))}
         </nav>
         <div className="settings-panel">
-          {tab === 'memory' && (
-            <MemoryWorkspace embedded data={data} project={project} act={act} safe={safe} />
-          )}
           {tab === 'account' && <AccountSettings executor={data.executor} onRefresh={onRefresh} />}
           {tab === 'tasks' && (
             <section className="settings-detail task-settings-detail" aria-label="任务中心">

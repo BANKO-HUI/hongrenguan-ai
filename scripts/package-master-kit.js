@@ -123,7 +123,7 @@ export function buildMasterKit() {
   );
   const manifest = {
     formatVersion: 1,
-    name: `Bomi智绘 ${templateMetadata.name}`,
+    name: `${templateMetadata.applicationName} ${templateMetadata.name}`,
     version: templateMetadata.templateVersion,
     application: {
       name: templateMetadata.applicationName,
@@ -131,7 +131,7 @@ export function buildMasterKit() {
     },
     sourceTag: templateMetadata.gitTag,
     createdAt: new Date().toISOString(),
-    purpose: ['跨电脑安装 Bomi智绘', '创建独立 ID 与端口的新工作台'],
+    purpose: ['跨电脑安装红人馆AI', '创建独立 ID 与端口的新工作台'],
     containsUserData: false,
     requirements: { node: '>=20.9.0', codexLogin: true },
     entryPoints: {

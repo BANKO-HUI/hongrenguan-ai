@@ -51,7 +51,7 @@ export function startWorkbenchServer({
             server.close((error) => (error ? closeReject(error) : done())),
           );
         };
-        console.log(`Bomi智绘工作台：${url}`);
+        console.log(`红人馆AI工作台：${url}`);
         resolve({ server, executor, workbench, url, directory, close });
       } catch (error) {
         server.close(() => reject(error));

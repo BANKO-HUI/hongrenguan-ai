@@ -27,12 +27,9 @@ import { activateAdjacentThumbnail } from './thumbnailNavigation.js';
 import { clampZoom, zoomOffsetAtPoint } from './zoomMath.js';
 import { groupAnnotationsByColor, removeAnnotationGroup } from './annotationGroups.js';
 import { insertMentionToken, uniqueMention } from './referenceMentions.js';
-import { LookLayerPanel } from './LookLayerPanel.jsx';
 import { GenerationSlotRail } from './GenerationSlotRail.jsx';
 import { mergePreviewBySource } from './generationSlots.js';
 
-const RESTYLE_BASE_INSTRUCTION =
-  '在保持未标记区域和人物身份稳定的前提下，按标记与参考精细调整服装。';
 const restyleDraftKey = (projectId) => `bomi-restyle-draft:${projectId}`;
 const readRestyleDraft = (projectId) => {
   try {
@@ -933,11 +930,6 @@ export function DesignWorkspace({ type, project, data, act, safe, onTask, initia
       ? savedRestyleDraft.annotations
       : [],
   );
-  const [layerMode, setLayerMode] = useState(
-    restoreSavedSource && typeof savedRestyleDraft.layerMode === 'boolean'
-      ? savedRestyleDraft.layerMode
-      : false,
-  );
   const [instruction, setInstruction] = useState(
     isRestyle
       ? restoreSavedSource && typeof savedRestyleDraft.instruction === 'string'
@@ -967,9 +959,9 @@ export function DesignWorkspace({ type, project, data, act, safe, onTask, initia
     if (!isRestyle || sourceMode !== 'look' || !sourceLookId) return;
     localStorage.setItem(
       restyleDraftKey(project.id),
-      JSON.stringify({ sourceLookId, annotations, layerMode, instruction }),
+      JSON.stringify({ sourceLookId, annotations, instruction }),
     );
-  }, [isRestyle, project.id, sourceMode, sourceLookId, annotations, layerMode, instruction]);
+  }, [isRestyle, project.id, sourceMode, sourceLookId, annotations, instruction]);
   useEffect(
     () => () => {
       if (sourceUrlRef.current) URL.revokeObjectURL(sourceUrlRef.current);
@@ -990,21 +982,12 @@ export function DesignWorkspace({ type, project, data, act, safe, onTask, initia
   const activeTask = isRestyle ? relevantTasks.find(isActive) : typeTasks.find(isActive);
   const latestTask = relevantTasks[0];
   const resultTask = activeTask || latestTask;
-  const layerLook = isRestyle
-    ? sourceMode === 'look'
-      ? sourceLook
-      : project.looks.find((look) => look.taskId === resultTask?.id)
-    : null;
   const resultPreviewItems = (resultTask?.results || [])
     .filter((result) => result.assetId)
     .map((result) => ({
       assetId: result.assetId,
       src: assetUrl(result.assetId),
-      title: isRestyle
-        ? result.editLayer?.assetId
-          ? '改款结果 · 局部图层合成'
-          : '改款结果'
-        : `裂变 ${result.slot}`,
+      title: isRestyle ? '改款结果' : `裂变 ${result.slot}`,
       slot: result.slot,
       label: isRestyle ? '改款结果' : `裂变 ${result.slot}`,
     }));
@@ -1061,29 +1044,6 @@ export function DesignWorkspace({ type, project, data, act, safe, onTask, initia
     );
   const addMention = (label) =>
     setInstruction((current) => `${current.trim()} @${label.trim() || '参考'} `);
-  const updateLookLayers = (layers) =>
-    layerLook &&
-    act(() =>
-      request(`/projects/${project.id}/looks/${layerLook.id}/layers`, {
-        method: 'PATCH',
-        body: { layers },
-      }),
-    );
-  const mergeLookLayers = (layers) =>
-    layerLook &&
-    act(() =>
-      request(`/projects/${project.id}/looks/${layerLook.id}/layers/merge`, {
-        method: 'POST',
-        body: { layers },
-      }),
-    );
-  const deleteLookLayerHistory = (historyId) =>
-    layerLook &&
-    act(() =>
-      request(`/projects/${project.id}/looks/${layerLook.id}/layers/history/${historyId}`, {
-        method: 'DELETE',
-      }),
-    );
   const selectSourceFile = (file) => {
     if (!file) return;
     if (sourceUrl) URL.revokeObjectURL(sourceUrl);
@@ -1144,7 +1104,7 @@ export function DesignWorkspace({ type, project, data, act, safe, onTask, initia
             .filter((option) => selectedTrendPrompts.has(option.id))
             .map((option) => option.prompt);
           const taskInstruction = isRestyle
-            ? `${layerMode ? RESTYLE_BASE_INSTRUCTION : '按传统整图方式改款；标注区域仅作为调整指引，不截取局部，不创建透明补丁图层。'}\n新增调整要求：${instruction.trim()}\n调整参数：${background === 'white' ? '输出商品白底图' : '保留或按说明调整场景'}；如需应用 Logo，自动按服装廓形、版片空间与整体构图协调其大小和位置；色彩浓度 ${colorIntensity}%；服装合体度 ${fitLevel}%。`
+            ? `按整图方式改款；标注区域作为精准调整指引，锁定区域保持不变，未要求修改的区域尽量稳定。\n新增调整要求：${instruction.trim()}\n调整参数：${background === 'white' ? '输出商品白底图' : '保留或按说明调整场景'}；如需应用 Logo，自动按服装廓形、版片空间与整体构图协调其大小和位置；色彩浓度 ${colorIntensity}%；服装合体度 ${fitLevel}%。`
             : `${instruction.trim()}${
                 selectedDirections.length
                   ? `\n趋势报告提取方向：${selectedDirections.join('；')}`
@@ -1162,7 +1122,7 @@ export function DesignWorkspace({ type, project, data, act, safe, onTask, initia
                 return isRestyle ? `@${label}` : label;
               }),
               annotations: isRestyle ? annotations : [],
-              layerMode: isRestyle && layerMode,
+              layerMode: false,
               count: isRestyle ? 1 : count,
               instruction: taskInstruction,
               background: isRestyle ? background : 'scene',
@@ -1188,15 +1148,11 @@ export function DesignWorkspace({ type, project, data, act, safe, onTask, initia
   const startHint =
     sourceConflict && sourceConflict.kind !== 'restyle'
       ? '当前图片正在进行其他处理，完成或结束后即可改款。'
-      : isRestyle && layerMode && annotations.some((annotation) => annotation.mode === 'adjust')
-        ? background === 'white'
-          ? '白底属于全图调整；结果会作为完整历史版本保存。'
-          : '只截取调整区附近生成透明补丁，未选区域保持原图，完成后可在当前页的图层面板中对比与合并。'
-        : isRestyle && !layerMode
-          ? annotations.length
-            ? '传统整图改款：标注会作为调整指引，不截取局部，结果保存为完整新版本。'
-            : '传统整图改款：不截取局部，结果保存为完整新版本。'
-          : '点击发送后直接执行，结果实时进入当前项目与成片管理。';
+      : isRestyle
+        ? annotations.length
+          ? '标注会作为整图改款的精准指引，结果保存为完整新版本并进入成片管理。'
+          : '按整图方式改款，结果保存为完整新版本并进入成片管理。'
+        : '点击发送后直接执行，结果实时进入成片管理。';
 
   return (
     <section className="page-scroll design-workspace">
@@ -1330,16 +1286,6 @@ export function DesignWorkspace({ type, project, data, act, safe, onTask, initia
             )}
           </div>
           <aside className="design-controls">
-            {isRestyle && (
-              <LookLayerPanel
-                look={layerLook}
-                enabled={layerMode}
-                onToggleEnabled={setLayerMode}
-                onUpdate={updateLookLayers}
-                onMerge={mergeLookLayers}
-                onDeleteHistory={deleteLookLayerHistory}
-              />
-            )}
             {isRestyle ? (
               <RestyleComposer
                 annotations={annotations}

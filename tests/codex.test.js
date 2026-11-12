@@ -173,7 +173,7 @@ test('signed-out inspection requests login before protected AI capabilities', as
     imageGeneration: false,
     model: null,
     models: [],
-    message: '尚未登录 Bomi智绘账号，请先完成授权。',
+    message: '尚未登录红人馆AI账号，请先完成授权。',
   });
   assert.equal(existsSync(protectedRequestMarker), false);
 });

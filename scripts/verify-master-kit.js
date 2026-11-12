@@ -36,9 +36,9 @@ function walk(folder, base = folder) {
 }
 
 export function verifyMasterKit() {
-  const packagedRoot = existsSync(path.join(sourceRoot, 'MASTER-MANIFEST.json'))
-    ? sourceRoot
-    : releaseDirectory;
+  const packagedRoot = existsSync(path.join(releaseDirectory, 'MASTER-MANIFEST.json'))
+    ? releaseDirectory
+    : sourceRoot;
   const manifestPath = path.join(packagedRoot, 'MASTER-MANIFEST.json');
   if (!existsSync(manifestPath))
     throw new Error('未找到 MASTER-MANIFEST.json，请先运行 npm run master:package。');
@@ -46,7 +46,7 @@ export function verifyMasterKit() {
   if (manifest.containsUserData !== false)
     throw new Error('母版清单必须明确 containsUserData=false。');
   if (
-    manifest.name !== `Bomi智绘 ${templateMetadata.name}` ||
+    manifest.name !== `${templateMetadata.applicationName} ${templateMetadata.name}` ||
     manifest.version !== templateMetadata.templateVersion
   )
     throw new Error(`母版清单不是${templateMetadata.name}。`);

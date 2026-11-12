@@ -123,7 +123,7 @@ test('large image previews share cursor-anchored wheel zoom and one lightbox sur
   assert.match(design, /aria-label="改款统一调整对话框"/);
   assert.match(design, /aria-label="添加参考资料"[\s\S]*input\.current\?\.click/);
   assert.match(design, /在调整说明中调用 @\$\{reference\.label\}/);
-  assert.match(design, /const RESTYLE_BASE_INSTRUCTION/);
+  assert.match(design, /标注区域作为精准调整指引/);
   assert.match(design, /isRestyle[\s\S]*\? ''/);
   assert.match(design, /className="restyle-prompt-examples"/);
   assert.match(design, /圈选与涂鸦区域会自动加入上方输入框/);
@@ -161,24 +161,18 @@ test('large image previews share cursor-anchored wheel zoom and one lightbox sur
   assert.match(styles, /html\.image-gallery-open,[\s\S]*overflow:\s*hidden/);
 });
 
-test('startup delay, explicit restyle layer mode and OpenAI model lists are wired', () => {
+test('startup delay, complete-image restyle mode and OpenAI model lists are wired', () => {
   const app = readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8');
   const design = readFileSync(new URL('../src/DesignWorkspace.jsx', import.meta.url), 'utf8');
-  const layers = readFileSync(new URL('../src/LookLayerPanel.jsx', import.meta.url), 'utf8');
   const settings = readFileSync(new URL('../src/SettingsWorkspace.jsx', import.meta.url), 'utf8');
 
-  assert.match(app, /setStartupMinimumElapsed\(true\), 3000/);
+  assert.match(app, /setStartupMinimumElapsed\(true\), 1200/);
   assert.match(app, /!data \|\| !startupMinimumElapsed/);
-  assert.match(
-    design,
-    /const \[layerMode, setLayerMode\] = useState\([\s\S]*savedRestyleDraft\.layerMode/,
-  );
-  assert.match(layers, /aria-pressed=\{enabled\}/);
   assert.match(design, /annotations: isRestyle \? annotations : \[\]/);
-  assert.match(design, /layerMode: isRestyle && layerMode/);
+  assert.match(design, /layerMode: false/);
   assert.match(design, /localStorage\.setItem\([\s\S]*restyleDraftKey\(project\.id\)/);
-  assert.match(layers, /删除图层历史/);
-  assert.match(design, /传统整图改款：不截取局部/);
+  assert.doesNotMatch(design, /LookLayerPanel|setLayerMode|mergeLookLayers/);
+  assert.match(design, /按整图方式改款/);
   assert.match(settings, /datalist id="openai-analysis-model-list"/);
   assert.match(settings, /datalist id="openai-image-model-list"/);
   assert.match(settings, /list=\{form\.providerType === 'openai'/);

@@ -288,7 +288,7 @@ export function createApp(
           required: ['reply'],
           properties: { reply: { type: 'string' } },
         },
-        prompt: `你是 Bomi智绘服装工作台的 Chat 助手。只用中文回答，语气清晰、具体、友好。结合当前项目、趋势资料和任务状态回答问题。优先直接回答，除非用户要求，否则保持简洁。不要声称已执行未发生的操作。当前项目已有趋势、模特、Logo 等资料时，可以直接生成系列，不要一律要求用户重复上传；只有基于新图片改款或分析新趋势文件时，才提示通过输入框添加对应文件。\n\n当前工作台上下文：${JSON.stringify(context)}\n\n最近对话：${JSON.stringify(recentMessages)}`,
+        prompt: `你是红人馆AI服装改款工作台的助手。只用中文回答，语气清晰、具体、友好。结合当前改款成片和任务状态回答问题。优先直接回答，除非用户要求，否则保持简洁。不要声称已执行未发生的操作。\n\n当前工作台上下文：${JSON.stringify(context)}\n\n最近对话：${JSON.stringify(recentMessages)}`,
       });
       ensure(
         typeof result?.reply === 'string' && result.reply.trim(),
@@ -495,7 +495,7 @@ export function createApp(
   });
   app.post('/api/projects/:id/export', (req, res) => {
     const buffer = workbench.exportProject(req.params.id, req.body);
-    res.attachment('Bomi智绘-delivery.zip').type('application/zip').send(buffer);
+    res.attachment('红人馆AI-delivery.zip').type('application/zip').send(buffer);
   });
   // Only the stdio plugin possesses this key. Browser sessions cannot read local paths or submit task results.
   app.use('/internal', (req, res, next) => {

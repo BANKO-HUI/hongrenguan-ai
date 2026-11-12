@@ -1,5 +1,5 @@
 import React from 'react';
-import { Aperture, Images, Layers3, Settings2, ShieldCheck } from 'lucide-react';
+import { Aperture, Images, Settings2, ShieldCheck, WandSparkles } from 'lucide-react';
 import { ThemeToggle } from './components.jsx';
 
 export function StartupScreen({ error, onRetry, theme, onToggleTheme }) {
@@ -17,25 +17,25 @@ export function StartupScreen({ error, onRetry, theme, onToggleTheme }) {
             <Aperture size={23} />
           </span>
           <div>
-            <strong>Bomi智绘</strong>
-            <small>FASHION INTELLIGENCE WORKSPACE</small>
+            <strong>红人馆AI</strong>
+            <small>FASHION RESTYLE WORKSPACE</small>
           </div>
         </div>
         <div className="login-statement">
-          <span className="eyebrow">STUDIO 3.0</span>
+          <span className="eyebrow">AI RESTYLE STUDIO</span>
           <h1>
-            从趋势线索，
+            从一张原图，
             <br />
-            到可交付的服装系列。
+            到可交付的改款成片。
           </h1>
-          <p>一个本机、可追踪、不覆盖原稿的设计工作台。</p>
+          <p>一个本机、可追踪、保留原稿的服装改款工作台。</p>
         </div>
         <div className="login-capabilities">
           <span>
-            <Layers3 size={15} /> 多参考系列设计
+            <WandSparkles size={15} /> 圈选、涂鸦与命名参考改款
           </span>
           <span>
-            <Images size={15} /> 改款、白底与版本管理
+            <Images size={15} /> 成片、白底与历史版本管理
           </span>
           <span>
             <ShieldCheck size={15} /> 素材和成片保存在本机
@@ -43,22 +43,22 @@ export function StartupScreen({ error, onRetry, theme, onToggleTheme }) {
         </div>
       </section>
 
-      <section className="login-card startup-card" aria-label="Bomi智绘启动状态">
+      <section className="login-card startup-card" aria-label="红人馆AI启动状态">
         <div className="login-card-index">LOCAL / STARTUP</div>
         <div>
           <span className="login-card-icon">
             {error ? <Settings2 size={22} /> : <Aperture size={22} />}
           </span>
-          <h2>{error ? '本机工作台暂未连接' : '正在开启 Bomi智绘'}</h2>
+          <h2>{error ? '本机工作台暂未连接' : '正在开启红人馆AI'}</h2>
           <p>
             {error
               ? '请确认本机服务正在运行，然后重新连接。'
-              : '正在载入项目、素材与任务状态，完成后将直接进入工作页面。'}
+              : '正在载入改款成片与任务状态，完成后将直接进入改款中心。'}
           </p>
         </div>
         <div className="login-benefits">
           <span>
-            <ShieldCheck size={14} /> 无需登录即可浏览和管理本机项目
+            <ShieldCheck size={14} /> 无需登录即可浏览和管理本机成片
           </span>
           <span>
             <Settings2 size={14} /> 帐号授权与第三方 API 统一在设置中管理
@@ -79,7 +79,7 @@ export function StartupScreen({ error, onRetry, theme, onToggleTheme }) {
             {error}
           </p>
         )}
-        <small className="login-legal">AI 帐号未连接时，设计资料与已有项目仍可正常查看。</small>
+        <small className="login-legal">AI 帐号未连接时，原图、参考图与已有成片仍可正常查看。</small>
       </section>
     </main>
   );
