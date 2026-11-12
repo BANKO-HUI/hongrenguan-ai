@@ -920,8 +920,10 @@ export function SettingsWorkspace({
           ))}
         </nav>
         <div className="settings-panel">
-          {tab === 'account' && <AccountSettings executor={data.executor} onRefresh={onRefresh} />}
-          {tab === 'tasks' && (
+          <div className={`workspace-view ${tab === 'account' ? '' : 'workspace-view-hidden'}`}>
+            <AccountSettings executor={data.executor} onRefresh={onRefresh} />
+          </div>
+          <div className={`workspace-view ${tab === 'tasks' ? '' : 'workspace-view-hidden'}`}>
             <section className="settings-detail task-settings-detail" aria-label="任务中心">
               <header className="settings-detail-head">
                 <span>
@@ -943,11 +945,13 @@ export function SettingsWorkspace({
                 showConfiguration={false}
               />
             </section>
-          )}
-          {tab === 'api' && <ApiSettings executor={data.executor} act={act} safe={safe} />}
-          {tab === 'output' && (
+          </div>
+          <div className={`workspace-view ${tab === 'api' ? '' : 'workspace-view-hidden'}`}>
+            <ApiSettings executor={data.executor} act={act} safe={safe} />
+          </div>
+          <div className={`workspace-view ${tab === 'output' ? '' : 'workspace-view-hidden'}`}>
             <OutputDirectorySettings config={data.outputDirectory} act={act} safe={safe} />
-          )}
+          </div>
         </div>
       </div>
     </section>

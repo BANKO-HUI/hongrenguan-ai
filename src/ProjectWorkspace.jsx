@@ -66,6 +66,14 @@ const appendSeriesRequirement = (prompt, requirement) =>
   storedSeriesPrompt(
     [additionalSeriesPrompt(prompt).trim(), requirement.trim()].filter(Boolean).join('\n'),
   );
+const readLocalState = (key, fallback = {}) => {
+  try {
+    const value = JSON.parse(localStorage.getItem(key) || 'null');
+    return value && typeof value === 'object' ? value : fallback;
+  } catch {
+    return fallback;
+  }
+};
 
 function lookPreviewItems(look, showWhite) {
   const currentAssetId = showWhite && look.white ? look.white : look.scene;
@@ -287,24 +295,42 @@ export function ProjectWorkspace({
   onTask,
   onRestyle,
 }) {
+  const [savedWorkspaceState] = useState(() => readLocalState(`hongren-finished-view:${p.id}`));
   const [draft, setDraft] = useState(() => {
     try {
       return {
         ...settings(p),
-        ...JSON.parse(sessionStorage.getItem(`badmark-draft:${p.id}`) || '{}'),
+        ...JSON.parse(localStorage.getItem(`badmark-draft:${p.id}`) || '{}'),
       };
     } catch {
       return settings(p);
     }
   });
   const [busy, setBusy] = useState(false);
-  const [selection, setSelection] = useState(new Set());
-  const [query, setQuery] = useState('');
-  const [filter, setFilter] = useState('all');
-  const [variant, setVariant] = useState('scene');
+  const [selection, setSelection] = useState(
+    () =>
+      new Set(Array.isArray(savedWorkspaceState.selection) ? savedWorkspaceState.selection : []),
+  );
+  const [query, setQuery] = useState(
+    typeof savedWorkspaceState.query === 'string' ? savedWorkspaceState.query : '',
+  );
+  const [filter, setFilter] = useState(
+    ['all', 'pending', 'white', 'adjusted', 'restyle', 'archived'].includes(
+      savedWorkspaceState.filter,
+    )
+      ? savedWorkspaceState.filter
+      : 'all',
+  );
+  const [variant, setVariant] = useState(
+    ['scene', 'white'].includes(savedWorkspaceState.variant)
+      ? savedWorkspaceState.variant
+      : 'scene',
+  );
   const [imageOrder, setImageOrder] = useImageSort('project');
-  const [selected, setSelected] = useState(null);
-  const [view, setView] = useState('canvas');
+  const [selected, setSelected] = useState(savedWorkspaceState.selected || null);
+  const [view, setView] = useState(
+    ['canvas', 'gallery'].includes(savedWorkspaceState.view) ? savedWorkspaceState.view : 'canvas',
+  );
   const [preview, setPreview] = useState(null);
   const [history, setHistory] = useState(false);
   const [historyPreview, setHistoryPreview] = useState(null);
@@ -319,10 +345,25 @@ export function ProjectWorkspace({
   const previousSaved = useRef(settings(p));
   useEffect(() => {
     try {
-      if (dirty) sessionStorage.setItem(`badmark-draft:${p.id}`, JSON.stringify(draft));
-      else sessionStorage.removeItem(`badmark-draft:${p.id}`);
+      if (dirty) localStorage.setItem(`badmark-draft:${p.id}`, JSON.stringify(draft));
+      else localStorage.removeItem(`badmark-draft:${p.id}`);
     } catch {}
   }, [dirty, draft, p.id]);
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        `hongren-finished-view:${p.id}`,
+        JSON.stringify({
+          selection: [...selection],
+          query,
+          filter,
+          variant,
+          selected,
+          view,
+        }),
+      );
+    } catch {}
+  }, [p.id, selection, query, filter, variant, selected, view]);
   useEffect(() => {
     const incoming = settings(p),
       previous = previousSaved.current;

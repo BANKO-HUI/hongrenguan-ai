@@ -48,6 +48,58 @@ test('rapid light and dark switching never blanks the workbench', async ({ page 
   expect(pageErrors).toEqual([]);
 });
 
+test('navigation, project switching and reload preserve unfinished choices', async ({ page }) => {
+  await page.goto('/');
+  const choosingProjects = page.waitForEvent('filechooser');
+  await page.locator('.new-project').click();
+  await (
+    await choosingProjects
+  ).setFiles([
+    { name: 'draft-one.png', mimeType: 'image/png', buffer: await png('red') },
+    { name: 'draft-two.png', mimeType: 'image/png', buffer: await png('blue') },
+  ]);
+  await expect(page.locator('.project')).toHaveCount(2);
+
+  await page.getByLabel('改款调整说明').fill('保留这条尚未提交的改款说明。');
+  const choosingReference = page.waitForEvent('filechooser');
+  await page.getByRole('button', { name: '添加参考资料', exact: true }).click();
+  await (
+    await choosingReference
+  ).setFiles({
+    name: 'collar-reference.png',
+    mimeType: 'image/png',
+    buffer: await png('green'),
+  });
+  await expect(page.getByText('参考图片 1', { exact: true })).toBeVisible();
+  await page.getByText('更多调整', { exact: true }).click();
+  await page.getByRole('button', { name: '商品白底', exact: true }).click();
+  await page.getByLabel('色彩浓度').fill('67');
+
+  await page.getByRole('button', { name: /成片管理/ }).click();
+  await page.getByRole('button', { name: /改款中心/ }).click();
+  await expect(page.getByLabel('改款调整说明')).toHaveValue('保留这条尚未提交的改款说明。');
+  await expect(page.getByText('参考图片 1', { exact: true })).toBeVisible();
+
+  await page.locator('.project').filter({ hasText: 'draft-two' }).click();
+  await page.locator('.project').filter({ hasText: 'draft-one' }).click();
+  await expect(page.getByLabel('改款调整说明')).toHaveValue('保留这条尚未提交的改款说明。');
+  await expect(page.getByText('参考图片 1', { exact: true })).toBeVisible();
+
+  await page.locator('.account').click();
+  await page.getByRole('button', { name: /API 管理/ }).click();
+  await page.getByRole('button', { name: /改款中心/ }).click();
+  await page.locator('.account').click();
+  await expect(page.getByRole('heading', { name: 'API 管理', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: /改款中心/ }).click();
+
+  await page.reload();
+  await expect(page.getByLabel('改款调整说明')).toHaveValue('保留这条尚未提交的改款说明。');
+  await expect(page.getByText('参考图片 1', { exact: true })).toBeVisible();
+  await page.getByText('更多调整', { exact: true }).click();
+  await expect(page.getByRole('button', { name: '商品白底', exact: true })).toHaveClass(/active/);
+  await expect(page.getByLabel('色彩浓度')).toHaveValue('67');
+});
+
 test('one image per project preserves history while multiple restyle tasks run together', async ({
   page,
 }) => {
@@ -66,7 +118,7 @@ test('one image per project preserves history while multiple restyle tasks run t
   await expect(page.getByText(/图层/)).toHaveCount(0);
 
   const choosingProjects = page.waitForEvent('filechooser');
-  await page.getByRole('button', { name: '添加图片项目', exact: true }).click();
+  await page.locator('.new-project').click();
   await (
     await choosingProjects
   ).setFiles([

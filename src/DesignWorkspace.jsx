@@ -29,6 +29,7 @@ import { groupAnnotationsByColor, removeAnnotationGroup } from './annotationGrou
 import { insertMentionToken, uniqueMention } from './referenceMentions.js';
 import { GenerationSlotRail } from './GenerationSlotRail.jsx';
 import { mergePreviewBySource } from './generationSlots.js';
+import { loadRestyleReferences, saveRestyleReferences } from './restyleReferenceStore.js';
 
 const restyleDraftKey = (projectId) => `bomi-restyle-draft:${projectId}`;
 const readRestyleDraft = (projectId) => {
@@ -923,15 +924,30 @@ export function DesignWorkspace({
   const sortedLooks = sortImages(project.looks, imageOrder, data.assets);
   const isRestyle = type === 'restyle';
   const [savedRestyleDraft] = useState(() => (isRestyle ? readRestyleDraft(project.id) : {}));
-  const preferredLookId = project.looks.some((look) => look.id === initialSourceLookId)
+  const initialLookId = project.looks.some((look) => look.id === initialSourceLookId)
     ? initialSourceLookId
+    : '';
+  const preferredLookId = initialLookId
+    ? initialLookId
     : project.looks.some((look) => look.id === savedRestyleDraft.sourceLookId)
       ? savedRestyleDraft.sourceLookId
       : sortedLooks[0]?.id || '';
-  const restoreSavedSource = isRestyle && savedRestyleDraft.sourceLookId === preferredLookId;
-  const [sourceMode, setSourceMode] = useState(project.looks.length ? 'look' : 'project');
+  const savedSourceMode = savedRestyleDraft.sourceMode === 'project' ? 'project' : 'look';
+  const initialSourceMode = initialLookId
+    ? 'look'
+    : savedRestyleDraft.sourceMode === 'project'
+      ? 'project'
+      : preferredLookId
+        ? 'look'
+        : 'project';
+  const restoreSavedSource =
+    isRestyle &&
+    initialSourceMode === savedSourceMode &&
+    (savedSourceMode === 'project' || savedRestyleDraft.sourceLookId === preferredLookId);
+  const [sourceMode, setSourceMode] = useState(initialSourceMode);
   const [sourceLookId, setSourceLookId] = useState(preferredLookId);
   const [references, setReferences] = useState([]);
+  const [referencesReady, setReferencesReady] = useState(false);
   const [annotations, setAnnotations] = useState(() =>
     restoreSavedSource && Array.isArray(savedRestyleDraft.annotations)
       ? savedRestyleDraft.annotations
@@ -939,31 +955,89 @@ export function DesignWorkspace({
   );
   const [instruction, setInstruction] = useState(
     isRestyle
-      ? restoreSavedSource && typeof savedRestyleDraft.instruction === 'string'
+      ? typeof savedRestyleDraft.instruction === 'string'
         ? savedRestyleDraft.instruction
         : ''
       : '保留原款的热销气质与核心识别，结合当前趋势做成风格相近但结构、面料和搭配有明显区别的新款。',
   );
   const [count, setCount] = useState(4);
-  const [background, setBackground] = useState('scene');
-  const [colorIntensity, setColorIntensity] = useState(50);
-  const [fitLevel, setFitLevel] = useState(50);
+  const [background, setBackground] = useState(
+    savedRestyleDraft.background === 'white' ? 'white' : 'scene',
+  );
+  const [colorIntensity, setColorIntensity] = useState(
+    Number.isFinite(savedRestyleDraft.colorIntensity) ? savedRestyleDraft.colorIntensity : 50,
+  );
+  const [fitLevel, setFitLevel] = useState(
+    Number.isFinite(savedRestyleDraft.fitLevel) ? savedRestyleDraft.fitLevel : 50,
+  );
   const [selectedTrendPrompts, setSelectedTrendPrompts] = useState(new Set());
   const [launchedTaskId, setLaunchedTaskId] = useState('');
   const [busy, setBusy] = useState(false);
   const [referencePreview, setReferencePreview] = useState(null);
-  const [resultCanvasIndex, setResultCanvasIndex] = useState(null);
+  const [resultCanvasIndex, setResultCanvasIndex] = useState(
+    Number.isInteger(savedRestyleDraft.resultCanvasIndex)
+      ? savedRestyleDraft.resultCanvasIndex
+      : null,
+  );
   const referencesRef = useRef([]);
   useEffect(() => {
     referencesRef.current = references;
   }, [references]);
   useEffect(() => {
-    if (!isRestyle || sourceMode !== 'look' || !sourceLookId) return;
-    localStorage.setItem(
-      restyleDraftKey(project.id),
-      JSON.stringify({ sourceLookId, annotations, instruction }),
-    );
-  }, [isRestyle, project.id, sourceMode, sourceLookId, annotations, instruction]);
+    if (!isRestyle) return;
+    try {
+      localStorage.setItem(
+        restyleDraftKey(project.id),
+        JSON.stringify({
+          sourceMode,
+          sourceLookId,
+          annotations,
+          instruction,
+          background,
+          colorIntensity,
+          fitLevel,
+          resultCanvasIndex,
+        }),
+      );
+    } catch {}
+  }, [
+    isRestyle,
+    project.id,
+    sourceMode,
+    sourceLookId,
+    annotations,
+    instruction,
+    background,
+    colorIntensity,
+    fitLevel,
+    resultCanvasIndex,
+  ]);
+  useEffect(() => {
+    let cancelled = false;
+    loadRestyleReferences(project.id).then((saved) => {
+      if (cancelled) return;
+      setReferences((current) => {
+        const known = new Set(current.map((reference) => reference.id));
+        return [
+          ...saved
+            .filter((reference) => !known.has(reference.id))
+            .map((reference) => ({
+              ...reference,
+              url: URL.createObjectURL(reference.file),
+            })),
+          ...current,
+        ];
+      });
+      setReferencesReady(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [project.id]);
+  useEffect(() => {
+    if (!referencesReady) return;
+    saveRestyleReferences(project.id, references).catch(() => {});
+  }, [project.id, references, referencesReady]);
   useEffect(
     () => () => {
       referencesRef.current.forEach((reference) => URL.revokeObjectURL(reference.url));
@@ -1041,7 +1115,6 @@ export function DesignWorkspace({
     setSourceMode('look');
     setSourceLookId(latestLook.id);
     setLaunchedTaskId('');
-    setAnnotations([]);
     setResultCanvasIndex(null);
   }, [project.looks, sourceMode]);
   const sourceConflict =
@@ -1176,7 +1249,6 @@ export function DesignWorkspace({
                         setSourceLookId(look.id);
                         setLaunchedTaskId('');
                         setResultCanvasIndex(null);
-                        if (isRestyle) setAnnotations([]);
                       }}
                     >
                       <img src={assetUrl(look.scene)} alt={look.title} />

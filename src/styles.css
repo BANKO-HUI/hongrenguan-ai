@@ -334,6 +334,8 @@ textarea:focus-visible {
 }
 .workspace-layer { display: contents; }
 .workspace-layer.settings-hidden { display: none; }
+.workspace-view { display: contents; }
+.workspace-view-hidden { display: none !important; }
 .settings-heading,
 .settings-layout {
   width: min(1180px, 100%);

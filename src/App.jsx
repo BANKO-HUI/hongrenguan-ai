@@ -50,12 +50,20 @@ export default function App() {
   });
   const [data, setData] = useState(null);
   const [projectId, setProjectId] = useState(() => remembered('hongren-active-workspace', ''));
-  const [sidebar, setSidebar] = useState(() => window.innerWidth > 820);
+  const [sidebar, setSidebar] = useState(
+    () => remembered('hongren-sidebar-v1', window.innerWidth > 820 ? 'open' : 'closed') === 'open',
+  );
   const [error, setError] = useState('');
   const [connected, setConnected] = useState(false);
   const [step, setStep] = useState(() => visibleStep(remembered('hongren-step-v1', 'restyle')));
-  const [settingsReturnStep, setSettingsReturnStep] = useState('restyle');
-  const [settingsTab, setSettingsTab] = useState('account');
+  const [settingsReturnStep, setSettingsReturnStep] = useState(() =>
+    visibleStep(remembered('hongren-settings-return-v1', 'restyle')),
+  );
+  const [settingsTab, setSettingsTab] = useState(() =>
+    ['account', 'tasks', 'api', 'output'].includes(remembered('hongren-settings-tab-v1', 'account'))
+      ? remembered('hongren-settings-tab-v1', 'account')
+      : 'account',
+  );
   const [restyleEntry, setRestyleEntry] = useState(null);
   const [importing, setImporting] = useState(false);
   const [toast, setToast] = useState('');
@@ -136,6 +144,9 @@ export default function App() {
 
   useEffect(() => remember('hongren-active-workspace', projectId), [projectId]);
   useEffect(() => remember('hongren-step-v1', step), [step]);
+  useEffect(() => remember('hongren-sidebar-v1', sidebar ? 'open' : 'closed'), [sidebar]);
+  useEffect(() => remember('hongren-settings-return-v1', settingsReturnStep), [settingsReturnStep]);
+  useEffect(() => remember('hongren-settings-tab-v1', settingsTab), [settingsTab]);
   useEffect(() => {
     if (!toast) return undefined;
     const timer = window.setTimeout(() => setToast(''), 3500);
@@ -187,7 +198,6 @@ export default function App() {
     });
 
   const navigate = (nextStep) => {
-    if (nextStep === 'restyle') setRestyleEntry(null);
     setStep(nextStep);
     if (window.innerWidth <= 820) setSidebar(false);
   };
@@ -316,7 +326,7 @@ export default function App() {
         </div>
         <button
           className={`account ${step === 'settings' ? 'active' : ''}`}
-          onClick={() => openSettings('account')}
+          onClick={() => openSettings(settingsTab)}
         >
           <span>
             <Settings2 size={16} />
@@ -371,7 +381,7 @@ export default function App() {
               服务连接中断，操作可能暂不可用。恢复连接后会自动同步。
             </div>
           )}
-          {step === 'settings' && (
+          <div className={`workspace-view ${step === 'settings' ? '' : 'workspace-view-hidden'}`}>
             <SettingsWorkspace
               tab={settingsTab}
               onTab={setSettingsTab}
@@ -383,34 +393,43 @@ export default function App() {
               onRefresh={refresh}
               onViewTask={viewTask}
             />
-          )}
+          </div>
           <div className={`workspace-layer ${step === 'settings' ? 'settings-hidden' : ''}`}>
-            {project && workspaceStep === 'restyle' ? (
-              <DesignWorkspace
-                key={`${project.id}:restyle:${restyleEntry?.nonce || 'default'}`}
-                type="restyle"
-                project={project}
-                data={data}
-                act={act}
-                safe={safe}
-                onTask={() => openSettings('tasks')}
-                onAddImages={() => projectInput.current?.click()}
-                initialSourceLookId={
-                  restyleEntry?.projectId === project.id ? restyleEntry.lookId : null
-                }
-              />
-            ) : project ? (
-              <ProjectWorkspace
-                key={project.id}
-                project={project}
-                data={data}
-                step="white"
-                setStep={setStep}
-                act={act}
-                safe={safe}
-                onTask={() => openSettings('tasks')}
-                onRestyle={openRestyle}
-              />
+            {project ? (
+              <>
+                <div
+                  className={`workspace-view ${workspaceStep === 'restyle' ? '' : 'workspace-view-hidden'}`}
+                >
+                  <DesignWorkspace
+                    key={`${project.id}:restyle:${restyleEntry?.nonce || 'default'}`}
+                    type="restyle"
+                    project={project}
+                    data={data}
+                    act={act}
+                    safe={safe}
+                    onTask={() => openSettings('tasks')}
+                    onAddImages={() => projectInput.current?.click()}
+                    initialSourceLookId={
+                      restyleEntry?.projectId === project.id ? restyleEntry.lookId : null
+                    }
+                  />
+                </div>
+                <div
+                  className={`workspace-view ${workspaceStep === 'white' ? '' : 'workspace-view-hidden'}`}
+                >
+                  <ProjectWorkspace
+                    key={project.id}
+                    project={project}
+                    data={data}
+                    step="white"
+                    setStep={setStep}
+                    act={act}
+                    safe={safe}
+                    onTask={() => openSettings('tasks')}
+                    onRestyle={openRestyle}
+                  />
+                </div>
+              </>
             ) : (
               <Empty title="添加第一张需要改款的图片">
                 <p>每张图片会建立独立项目，并保留自己的改款结果与操作历史。</p>
