@@ -1,0 +1,39 @@
+appId: com.bomi.zhihui
+productName: Bomi智绘
+asar: true
+directories:
+  output: .desktop-build
+  buildResources: build
+files:
+  - dist/**/*
+  - desktop/**/*
+  - server/**/*
+  - shared/**/*
+  - package.json
+  - node_modules/**/*
+afterPack: scripts/verify-desktop-package.cjs
+asarUnpack:
+  - node_modules/**/*.node
+  - node_modules/@openai/codex-*/vendor/**/*
+artifactName: Bomi-Zhihui-${version}-${os}-${arch}.${ext}
+mac:
+  category: public.app-category.graphics-design
+  icon: build/icon.png
+  identity: null
+  target: dmg
+dmg:
+  title: Bomi智绘 ${version}
+  writeUpdateInfo: false
+win:
+  icon: build/icon.png
+  target: nsis
+nsis:
+  oneClick: true
+  perMachine: false
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+linux:
+  category: Graphics
+  icon: build/icon.png
+  target:
+    - AppImage

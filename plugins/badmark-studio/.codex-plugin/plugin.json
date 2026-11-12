@@ -1,0 +1,27 @@
+{
+  "name": "badmark-studio",
+  "version": "3.4.4+badmark.20261107091514",
+  "description": "\u7ba1\u7406\u5171\u4eab\u8d8b\u52bf\u4e0e\u7d20\u6750\u5e93\uff0c\u5b8c\u6210\u670d\u88c5\u7cfb\u5217\u3001\u7cbe\u51c6\u6539\u6b3e\u3001\u7206\u6b3e\u88c2\u53d8\u548c\u4ea4\u4ed8\u3002",
+  "author": {
+    "name": "Bomi智绘"
+  },
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "Bomi智绘服装工作台",
+    "shortDescription": "\u7cfb\u5217\u751f\u6210\u3001\u533a\u57df\u6539\u6b3e\u3001\u7206\u6b3e\u88c2\u53d8\u4e0e\u6210\u7247\u4ea4\u4ed8",
+    "longDescription": "与本机 Bomi智绘工作台共享项目、趋势、素材和任务。AI 服务读取真实报告、调用图像工具生成与编辑成片；支持圈选/涂鸦锁定区域、非破坏局部图层、多方案选择合并、命名参考、爆款多款裂变、实时回传、失败续做、历史版本和 ZIP 导出。",
+    "developerName": "Bomi智绘",
+    "category": "Productivity",
+    "capabilities": ["Interactive", "Write"],
+    "brandColor": "#272a26",
+    "defaultPrompt": [
+      "打开 Bomi智绘工作台，查看待处理任务。",
+      "使用 Bomi智绘工作台，完成当前项目的服装系列。",
+      "在 Bomi智绘改款中心精细调整一张服装图。",
+      "用 Bomi智绘爆款裂变生成一组差异化新款。",
+      "\u5c06\u9009\u5b9a\u9020\u578b\u5236\u4f5c\u767d\u5e95\u56fe\u5e76\u5bfc\u51fa\u4ea4\u4ed8\u5305\u3002",
+      "\u8bb0\u4f4f\u6211\u7684\u54c1\u724c\u89c4\u5219\uff0c\u5e76\u5728\u540e\u7eed\u7cfb\u5217\u751f\u6210\u4e2d\u6301\u7eed\u4f7f\u7528\u3002"
+    ]
+  }
+}

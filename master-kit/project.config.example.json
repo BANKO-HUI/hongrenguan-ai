@@ -1,0 +1,7 @@
+{
+  "pluginId": "my-fashion-workbench",
+  "displayName": "我的服装工作台",
+  "brandName": "MyBrand",
+  "frontendPort": 4273,
+  "backendPort": 4274
+}
