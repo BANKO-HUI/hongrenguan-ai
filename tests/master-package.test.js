@@ -41,6 +41,7 @@ test('master release is complete, checksum-verified and free of runtime data', (
   assert.ok(existsSync(path.join(result.packagedRoot, 'tests/theme.test.js')));
   assert.ok(existsSync(path.join(result.packagedRoot, 'shared/openai-defaults.js')));
   assert.ok(existsSync(path.join(result.packagedRoot, 'build/icon-source.png')));
+  assert.equal(existsSync(path.join(result.packagedRoot, 'build/icon.png')), false);
   assert.ok(existsSync(path.join(result.packagedRoot, 'LICENSE')));
   assert.ok(existsSync(path.join(result.packagedRoot, 'CONTRIBUTING.md')));
   assert.ok(existsSync(path.join(result.packagedRoot, '.github/workflows/ci.yml')));

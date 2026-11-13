@@ -31,7 +31,6 @@ const rootFiles = [
   'LICENSE',
   'README.md',
   'build/icon-source.png',
-  'build/icon.png',
   'index.html',
   'install.command',
   'install.cmd',
