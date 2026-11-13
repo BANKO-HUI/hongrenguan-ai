@@ -54,4 +54,9 @@ test('image projects open restyle directly and freehand uses the finest default 
   assert.match(design, /const \[tool, setTool\] = useState\('brush'\)/);
   assert.match(design, /const \[brushSize, setBrushSize\] = useState\(2\)/);
   assert.match(design, /\['极细', 2\]/);
+  assert.match(
+    design,
+    /const drawingId = drawing\.current\.id;[\s\S]*annotation\.id !== drawingId/,
+  );
+  assert.doesNotMatch(design, /annotation\.id !== drawing\.current\.id/);
 });

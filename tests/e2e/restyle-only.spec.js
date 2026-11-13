@@ -49,6 +49,8 @@ test('rapid light and dark switching never blanks the workbench', async ({ page 
 });
 
 test('navigation, project switching and reload preserve unfinished choices', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', (error) => pageErrors.push(error.message));
   await page.goto('/');
   const choosingProjects = page.waitForEvent('filechooser');
   await page.locator('.new-project').click();
@@ -73,20 +75,40 @@ test('navigation, project switching and reload preserve unfinished choices', asy
   await expect(page.getByText('参考图片 1', { exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: '涂鸦', exact: true })).toHaveClass(/active/);
   await expect(page.getByRole('button', { name: '涂鸦极细笔', exact: true })).toHaveClass(/active/);
+  const annotationSurface = page.locator('.annotation-image-content');
+  const annotationBox = await annotationSurface.boundingBox();
+  await page.mouse.move(
+    annotationBox.x + annotationBox.width * 0.35,
+    annotationBox.y + annotationBox.height * 0.35,
+  );
+  await page.mouse.down();
+  await page.mouse.move(
+    annotationBox.x + annotationBox.width * 0.65,
+    annotationBox.y + annotationBox.height * 0.55,
+    { steps: 8 },
+  );
+  await page.mouse.up();
+  await expect(page.locator('.annotation-image-wrap polyline')).toHaveCount(1);
+  await expect(page.locator('.app-shell')).toBeVisible();
+  expect(pageErrors).toEqual([]);
   await page.getByText('更多调整', { exact: true }).click();
   await page.getByRole('button', { name: '商品白底', exact: true }).click();
   await page.getByLabel('色彩浓度').fill('67');
 
   await page.getByRole('button', { name: /成片管理/ }).click();
   await page.getByRole('button', { name: /改款中心/ }).click();
-  await expect(page.getByLabel('改款调整说明')).toHaveValue('保留这条尚未提交的改款说明。');
+  await expect(page.getByLabel('改款调整说明')).toHaveValue(
+    /保留这条尚未提交的改款说明。.*@红色区域/,
+  );
   await expect(page.getByText('参考图片 1', { exact: true })).toBeVisible();
 
   await page.getByRole('button', { name: /成片管理/ }).click();
   await page.locator('.project').filter({ hasText: 'draft-two' }).click();
   await expect(page.getByRole('heading', { name: '改款中心', exact: true })).toBeVisible();
   await page.locator('.project').filter({ hasText: 'draft-one' }).click();
-  await expect(page.getByLabel('改款调整说明')).toHaveValue('保留这条尚未提交的改款说明。');
+  await expect(page.getByLabel('改款调整说明')).toHaveValue(
+    /保留这条尚未提交的改款说明。.*@红色区域/,
+  );
   await expect(page.getByText('参考图片 1', { exact: true })).toBeVisible();
 
   await page.locator('.account').click();
@@ -97,7 +119,9 @@ test('navigation, project switching and reload preserve unfinished choices', asy
   await page.getByRole('button', { name: /改款中心/ }).click();
 
   await page.reload();
-  await expect(page.getByLabel('改款调整说明')).toHaveValue('保留这条尚未提交的改款说明。');
+  await expect(page.getByLabel('改款调整说明')).toHaveValue(
+    /保留这条尚未提交的改款说明。.*@红色区域/,
+  );
   await expect(page.getByText('参考图片 1', { exact: true })).toBeVisible();
   await page.getByText('更多调整', { exact: true }).click();
   await expect(page.getByRole('button', { name: '商品白底', exact: true })).toHaveClass(/active/);

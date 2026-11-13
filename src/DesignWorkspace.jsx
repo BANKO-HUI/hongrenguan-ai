@@ -267,10 +267,11 @@ function AnnotationStage({ src, annotations, setAnnotations }) {
       return;
     }
     if (drawing.current?.pointerId !== event.pointerId) return;
+    const drawingId = drawing.current.id;
     const next = point(event);
     setAnnotations((current) =>
       current.map((annotation) => {
-        if (annotation.id !== drawing.current.id) return annotation;
+        if (annotation.id !== drawingId) return annotation;
         return {
           ...annotation,
           points:
