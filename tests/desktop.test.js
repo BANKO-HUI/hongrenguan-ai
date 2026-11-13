@@ -16,8 +16,10 @@ const require = createRequire(import.meta.url);
 const { createPackage } = require('@electron/asar');
 const {
   REQUIRED_ASAR_FILES,
+  WINDOWS_REQUIRED_UNPACKED_FILES,
   packagedAsarPath,
   verifyPackagedAsar,
+  verifyPackagedNativeRuntime,
 } = require('../scripts/verify-desktop-package.cjs');
 
 test('desktop runtime stores mutable workspace data outside the application bundle', () => {
@@ -120,13 +122,24 @@ test('desktop exposes a native local output folder picker through an isolated pr
 test('Windows installer build targets mainstream x64 PCs even on an ARM Mac', () => {
   const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
   assert.match(packageJson.scripts['desktop:dist:win'], /electron-builder --win nsis --x64/);
+  assert.match(packageJson.scripts['desktop:dist:win'], /desktop:deps:win/);
+  assert.match(packageJson.scripts['desktop:deps:win'], /--os=win32 --cpu=x64/);
 });
 
 test('desktop package includes shared runtime modules and verifies every packaged app', () => {
   const builderConfig = readFileSync(new URL('../electron-builder.yml', import.meta.url), 'utf8');
   assert.match(builderConfig, /^\s*- shared\/\*\*\/\*\s*$/m);
   assert.match(builderConfig, /^afterPack: scripts\/verify-desktop-package\.cjs$/m);
+  assert.match(builderConfig, /^\s*- node_modules\/@img\/sharp-\*\/\*\*\/\*\s*$/m);
+  assert.match(builderConfig, /^\s*- node_modules\/@napi-rs\/canvas-\*\/\*\*\/\*\s*$/m);
   assert.ok(REQUIRED_ASAR_FILES.includes('/shared/openai-defaults.js'));
+  assert.ok(
+    WINDOWS_REQUIRED_UNPACKED_FILES.some((entry) => entry.endsWith('sharp-win32-x64-0.35.4.node')),
+  );
+  assert.ok(
+    WINDOWS_REQUIRED_UNPACKED_FILES.some((entry) => entry.endsWith('skia.win32-x64-msvc.node')),
+  );
+  assert.ok(WINDOWS_REQUIRED_UNPACKED_FILES.some((entry) => entry.endsWith('codex.exe')));
   assert.equal(
     packagedAsarPath({
       appOutDir: '/tmp/mac-arm64',
@@ -142,6 +155,23 @@ test('desktop package includes shared runtime modules and verifies every package
       packager: { appInfo: { productFilename: 'Bomi智绘' } },
     }),
     path.join('C:\\build\\win-unpacked', 'resources', 'app.asar'),
+  );
+});
+
+test('desktop package verification rejects Windows builds without native image and AI runtimes', (t) => {
+  const directory = mkdtempSync(path.join(os.tmpdir(), 'bomi-windows-native-package-'));
+  t.after(() => rmSync(directory, { recursive: true, force: true }));
+  const resources = path.join(directory, 'resources');
+  mkdirSync(resources, { recursive: true });
+  writeFileSync(path.join(resources, 'app.asar'), 'fixture');
+  assert.throws(
+    () =>
+      verifyPackagedNativeRuntime({
+        appOutDir: directory,
+        electronPlatformName: 'win32',
+        packager: { appInfo: { productFilename: '红人馆AI' } },
+      }),
+    /sharp-win32-x64/,
   );
 });
 

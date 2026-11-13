@@ -20,9 +20,10 @@
     "master:package": "node scripts/package-master-kit.js",
     "master:verify": "node scripts/verify-master-kit.js",
     "desktop:icon": "node scripts/build-desktop-icon.js",
+    "desktop:deps:win": "npm install --force --no-save --include=optional --os=win32 --cpu=x64",
     "desktop:dir": "npm run build && npm run desktop:icon && electron-builder --dir --publish never",
     "desktop:dist": "npm run build && npm run desktop:icon && electron-builder --mac dmg --publish never",
-    "desktop:dist:win": "npm run build && npm run desktop:icon && electron-builder --win nsis --x64 --publish never"
+    "desktop:dist:win": "npm run build && npm run desktop:icon && npm run desktop:deps:win && electron-builder --win nsis --x64 --publish never"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",
