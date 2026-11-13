@@ -33,6 +33,7 @@ test('master release is complete, checksum-verified and free of runtime data', (
   assert.equal(manifest.application.version, '3.4.4');
   assert.equal(manifest.sourceTag, 'golden-master-3.0');
   assert.equal(manifest.containsUserData, false);
+  assert.equal(manifest.requirements.node, '>=22.0.0');
   assert.ok(existsSync(path.join(result.packagedRoot, 'public/fonts/kanit-400.ttf')));
   assert.ok(existsSync(path.join(result.packagedRoot, 'tests/theme.test.js')));
   assert.ok(existsSync(path.join(result.packagedRoot, 'shared/openai-defaults.js')));

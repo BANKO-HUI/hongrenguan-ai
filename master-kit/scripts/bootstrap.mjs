@@ -8,9 +8,8 @@ const args = new Set(process.argv.slice(2));
 const skipPlugin = args.has('--skip-plugin');
 const full = args.has('--full');
 
-const [major, minor] = process.versions.node.split('.').map(Number);
-if (major < 20 || (major === 20 && minor < 9))
-  throw new Error(`需要 Node.js 20.9 或更高版本，当前为 ${process.versions.node}。`);
+const [major] = process.versions.node.split('.').map(Number);
+if (major < 22) throw new Error(`需要 Node.js 22.0 或更高版本，当前为 ${process.versions.node}。`);
 if (!existsSync(path.join(root, 'package-lock.json')))
   throw new Error('母版缺少 package-lock.json。');
 

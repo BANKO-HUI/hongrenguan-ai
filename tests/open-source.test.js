@@ -12,6 +12,7 @@ test('repository publishes complete AGPL open-source metadata without runtime da
   const gitignore = read('.gitignore');
 
   assert.equal(packageJson.license, 'AGPL-3.0-only');
+  assert.equal(packageJson.engines.node, '>=22.0.0');
   assert.equal(packageJson.repository.url, 'git+https://github.com/BANKO-HUI/hongrenguan-ai.git');
   assert.match(license, /GNU AFFERO GENERAL PUBLIC LICENSE/);
   assert.match(license, /Version 3, 19 November 2007/);
@@ -27,4 +28,7 @@ test('public CI installs locked dependencies and verifies tests plus production 
   assert.match(workflow, /npm test/);
   assert.match(workflow, /npm run build/);
   assert.match(workflow, /contents: read/);
+  assert.match(workflow, /node-version: 22/);
+  assert.match(workflow, /actions\/checkout@v7/);
+  assert.match(workflow, /actions\/setup-node@v7/);
 });

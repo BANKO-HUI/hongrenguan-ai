@@ -12,6 +12,9 @@
     "url": "https://github.com/BANKO-HUI/hongrenguan-ai/issues"
   },
   "homepage": "https://github.com/BANKO-HUI/hongrenguan-ai#readme",
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "version": "3.4.4",
   "type": "module",
   "main": "desktop/main.js",

@@ -16,7 +16,7 @@ npm run build
 npm run open
 ```
 
-Node.js 版本需为 20.9 或更高。
+Node.js 版本需为 22.0 或更高。
 
 ## 提交前检查
 

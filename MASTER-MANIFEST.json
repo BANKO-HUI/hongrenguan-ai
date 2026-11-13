@@ -8,13 +8,10 @@
   },
   "sourceTag": "golden-master-3.0",
   "createdAt": "2026-11-12T07:21:00.326Z",
-  "purpose": [
-    "跨电脑安装红人馆AI",
-    "创建独立 ID 与端口的新工作台"
-  ],
+  "purpose": ["跨电脑安装红人馆AI", "创建独立 ID 与端口的新工作台"],
   "containsUserData": false,
   "requirements": {
-    "node": ">=20.9.0",
+    "node": ">=22.0.0",
     "codexLogin": true
   },
   "entryPoints": {

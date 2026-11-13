@@ -3,7 +3,7 @@ set -eu
 cd "$(dirname "$0")"
 
 if ! command -v node >/dev/null 2>&1; then
-  printf '%s\n' '安装红人馆AI需要 Node.js 20.9 或更高版本。'
+  printf '%s\n' '安装红人馆AI需要 Node.js 22.0 或更高版本。'
   printf '%s\n' '请先从 https://nodejs.org/ 安装 Node.js，再双击本文件。'
   printf '\n按回车键关闭…'
   read -r _

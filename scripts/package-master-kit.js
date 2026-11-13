@@ -136,7 +136,7 @@ export function buildMasterKit() {
     createdAt: new Date().toISOString(),
     purpose: ['跨电脑安装红人馆AI', '创建独立 ID 与端口的新工作台'],
     containsUserData: false,
-    requirements: { node: '>=20.9.0', codexLogin: true },
+    requirements: { node: '>=22.0.0', codexLogin: true },
     entryPoints: {
       startHere: 'START-HERE.md',
       bootstrap: 'master-kit/scripts/bootstrap.mjs',
