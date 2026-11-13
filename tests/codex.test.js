@@ -36,6 +36,14 @@ rl.on('line', line => {
     send({ method: 'turn/completed', params: { threadId: request.params.threadId, turn: { ...turn, status: 'failed', error: { message: 'Test quota error' } } } });
     return;
   }
+  if (prompt === 'generated-image-path') {
+    const savedPath = ${JSON.stringify(path.join(directory, 'generated.png'))};
+    fs.writeFileSync(savedPath, 'generated');
+    send({ method: 'item/completed', params: { threadId: request.params.threadId, turnId: turn.id, item: { type: 'imageGeneration', status: 'completed', savedPath, failure: null } } });
+    send({ method: 'item/completed', params: { threadId: request.params.threadId, turnId: turn.id, item: { type: 'agentMessage', text: JSON.stringify({ error: '图像生成工具未返回可访问的结果。', image: null }) } } });
+    send({ method: 'turn/completed', params: { threadId: request.params.threadId, turn: { ...turn, status: 'completed' } } });
+    return;
+  }
   const result = { error: '', sandbox: 'read-only', apiKey: Boolean(process.env.OPENAI_API_KEY || process.env.CODEX_API_KEY), disabled: args.filter((a,i)=>args[i-1]==='--disable'), images: request.params.input.filter(item => item.type === 'localImage').map(item => item.path), configs: args.filter((a,i)=>args[i-1]==='-c') };
   send({ method: 'item/completed', params: { threadId: request.params.threadId, turnId: turn.id, item: { type: 'agentMessage', text: JSON.stringify(result) } } });
   send({ method: 'turn/completed', params: { threadId: request.params.threadId, turn: { ...turn, status: 'completed' } } });
@@ -137,6 +145,35 @@ test('persistent app-server transport uses read-only structured execution and st
   assert.equal(result.threadId, '11111111-1111-1111-1111-111111111111');
   await runCodex({ ...args, prompt: 'success again', images: [reference] });
   assert.equal(readFileSync(args.starts, 'utf8').trim().split('\n').length, 1);
+});
+
+test('app-server transport recovers the authoritative saved image path from generation events', async (t) => {
+  const args = runtime(t);
+  const result = await runCodex({
+    ...args,
+    prompt: 'generated-image-path',
+    schema: {
+      type: 'object',
+      properties: {
+        error: { type: 'string' },
+        image: {
+          anyOf: [
+            {
+              type: 'object',
+              properties: {
+                filePath: { type: 'string' },
+                review: { type: 'string' },
+              },
+            },
+            { type: 'null' },
+          ],
+        },
+      },
+    },
+  });
+  assert.equal(result.error, '');
+  assert.equal(result.image.filePath, path.join(args.directory, 'generated.png'));
+  assert.match(result.image.review, /生图完成事件/);
 });
 
 test('app-server transport reports provider failure instead of accepting stale output', async (t) => {

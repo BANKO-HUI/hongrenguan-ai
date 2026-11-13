@@ -269,6 +269,18 @@ const disabledFeatures = [
   'hooks',
 ];
 
+function recoverGeneratedImageResult(result, schema, savedPath) {
+  if (!savedPath || typeof savedPath !== 'string' || !path.isAbsolute(savedPath)) return null;
+  const image = {
+    filePath: savedPath,
+    review: '已从生图完成事件接收本机结果，等待工作台校验。',
+  };
+  if (schema?.properties?.image) return { ...result, error: '', image };
+  if (schema?.properties?.result && result?.result?.plan)
+    return { ...result, error: '', result: { ...result.result, image } };
+  return null;
+}
+
 class AccountAppServer {
   constructor(binary) {
     this.binary = binary;
@@ -373,6 +385,14 @@ class AccountAppServer {
       else turn.onProgress('正在连接 AI 服务，网络异常时会自动尝试重新连接。');
     } else if (message.method === 'item/started' && params.item?.type === 'imageGeneration') {
       turn.onProgress('正在生成真实图片，请稍候；可离开此页面。');
+    } else if (message.method === 'item/completed' && params.item?.type === 'imageGeneration') {
+      if (params.item.savedPath) turn.generatedImagePath = params.item.savedPath;
+      else if (params.item.failure)
+        turn.failure = new Error(
+          params.item.failure.type === 'usageLimitExceeded'
+            ? '图像生成服务已达到使用额度上限。'
+            : '图像生成工具执行失败。',
+        );
     } else if (message.method === 'item/completed' && params.item?.type === 'agentMessage') {
       turn.message = params.item.text;
       turn.onProgress('AI 正在处理与复核本步骤，真实结果通过校验后会自动保存。');
@@ -383,8 +403,14 @@ class AccountAppServer {
         turn.finish(new Error(params.turn?.error?.message || 'AI 服务执行未完成'));
       else {
         try {
-          ensure(turn.message, 'AI 服务没有返回结构化结果');
-          const result = JSON.parse(turn.message);
+          let result = turn.message ? JSON.parse(turn.message) : {};
+          const recovered = recoverGeneratedImageResult(
+            result,
+            turn.schema,
+            turn.generatedImagePath,
+          );
+          if (recovered) result = recovered;
+          else ensure(turn.message, 'AI 服务没有返回结构化结果');
           ensure(!result.error, result.error);
           turn.finish(null, { ...result, threadId: params.threadId });
         } catch (error) {
@@ -433,6 +459,8 @@ class AccountAppServer {
         turnId: null,
         message: '',
         failure: null,
+        schema,
+        generatedImagePath: '',
         onProgress,
         finish: (error, result) => {
           if (state.done) return;
