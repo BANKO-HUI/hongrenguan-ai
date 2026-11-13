@@ -1,11 +1,14 @@
-import test from 'node:test';
+import test, { before } from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import os from 'node:os';
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdtempSync, readFileSync } from 'node:fs';
 import { updateMarketplace, installedMcpConfig } from '../scripts/install-plugin.js';
+import { buildMasterKit } from '../scripts/package-master-kit.js';
 import { verifyMasterKit } from '../scripts/verify-master-kit.js';
+
+before(() => buildMasterKit());
 
 test('portable plugin installer creates marketplace and target-machine MCP configuration', () => {
   const marketplace = updateMarketplace(null, {

@@ -7,7 +7,6 @@ import {
   archivePath,
   releaseDirectory,
   releaseName,
-  sourceRoot,
   templateMetadata,
 } from './package-master-kit.js';
 
@@ -36,9 +35,7 @@ function walk(folder, base = folder) {
 }
 
 export function verifyMasterKit() {
-  const packagedRoot = existsSync(path.join(releaseDirectory, 'MASTER-MANIFEST.json'))
-    ? releaseDirectory
-    : sourceRoot;
+  const packagedRoot = releaseDirectory;
   const manifestPath = path.join(packagedRoot, 'MASTER-MANIFEST.json');
   if (!existsSync(manifestPath))
     throw new Error('未找到 MASTER-MANIFEST.json，请先运行 npm run master:package。');
