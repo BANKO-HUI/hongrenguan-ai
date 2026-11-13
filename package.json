@@ -3,6 +3,15 @@
   "description": "红人馆AI本机服装改款与成片管理工作台",
   "author": "红人馆AI",
   "private": true,
+  "license": "AGPL-3.0-only",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BANKO-HUI/hongrenguan-ai.git"
+  },
+  "bugs": {
+    "url": "https://github.com/BANKO-HUI/hongrenguan-ai/issues"
+  },
+  "homepage": "https://github.com/BANKO-HUI/hongrenguan-ai#readme",
   "version": "3.4.4",
   "type": "module",
   "main": "desktop/main.js",

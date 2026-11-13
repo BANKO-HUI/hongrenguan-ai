@@ -75,6 +75,9 @@ export function verifyMasterKit() {
     const required = [
       `${releaseName}/START-HERE.md`,
       `${releaseName}/GOLDEN-TEMPLATE.json`,
+      `${releaseName}/LICENSE`,
+      `${releaseName}/CONTRIBUTING.md`,
+      `${releaseName}/.github/workflows/ci.yml`,
       `${releaseName}/package.json`,
       `${releaseName}/electron-builder.yml`,
       `${releaseName}/desktop/main.js`,

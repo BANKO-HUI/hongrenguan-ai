@@ -130,6 +130,8 @@ test('desktop package includes shared runtime modules and verifies every package
   const builderConfig = readFileSync(new URL('../electron-builder.yml', import.meta.url), 'utf8');
   assert.match(builderConfig, /^\s*- shared\/\*\*\/\*\s*$/m);
   assert.match(builderConfig, /^afterPack: scripts\/verify-desktop-package\.cjs$/m);
+  assert.ok(REQUIRED_ASAR_FILES.includes('/LICENSE'));
+  assert.ok(REQUIRED_ASAR_FILES.includes('/README.md'));
   assert.match(builderConfig, /^\s*- node_modules\/@img\/sharp-\*\/\*\*\/\*\s*$/m);
   assert.match(builderConfig, /^\s*- node_modules\/@napi-rs\/canvas-\*\/\*\*\/\*\s*$/m);
   assert.ok(REQUIRED_ASAR_FILES.includes('/shared/openai-defaults.js'));

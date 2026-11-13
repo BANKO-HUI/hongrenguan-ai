@@ -3,6 +3,8 @@ const path = require('node:path');
 const { listPackage } = require('@electron/asar');
 
 const REQUIRED_ASAR_FILES = [
+  '/LICENSE',
+  '/README.md',
   '/desktop/main.js',
   '/desktop/runtime.js',
   '/dist/index.html',

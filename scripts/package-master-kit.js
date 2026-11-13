@@ -26,7 +26,9 @@ const rootFiles = [
   '.gitignore',
   '.prettierrc.json',
   'AGENTS.md',
+  'CONTRIBUTING.md',
   'GOLDEN-TEMPLATE.json',
+  'LICENSE',
   'README.md',
   'build/icon-source.png',
   'build/icon.png',
@@ -39,7 +41,7 @@ const rootFiles = [
   'electron-builder.yml',
   'vite.config.js',
 ];
-const directories = ['src', 'server', 'shared', 'master-kit', 'desktop'];
+const directories = ['.github', 'src', 'server', 'shared', 'master-kit', 'desktop'];
 const scriptFiles = [
   'dev.js',
   'e2e-server.js',
@@ -68,6 +70,7 @@ const testFiles = [
   'mcp.test.js',
   'auth.test.js',
   'openai-compatible.test.js',
+  'open-source.test.js',
   'presentation-template.test.js',
   'referenceMentions.test.js',
   'regional-restyle.test.js',

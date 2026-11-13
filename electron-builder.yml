@@ -5,6 +5,8 @@ directories:
   output: .desktop-build
   buildResources: build
 files:
+  - LICENSE
+  - README.md
   - dist/**/*
   - desktop/**/*
   - server/**/*
